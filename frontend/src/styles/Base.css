@@ -17,6 +17,7 @@
   pointer-events: auto;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .div-content {

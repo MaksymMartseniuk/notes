@@ -227,7 +227,11 @@ export default function Base() {
     <div className="container">
       <nav className="sidebar-container">
         <div className="notes-sidebar-swicher">
-          <span className="notes-sidebar-username">{user.username}</span>
+          <span className="notes-sidebar-username">
+            {user.username.length > 15
+              ? user.username.slice(0, 15) + "..."
+              : user.username}
+          </span>
           <button
             className="notes-sidebar-swicher-button"
             onClick={handleCreateNote}
