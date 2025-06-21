@@ -8,7 +8,7 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     UserSettingsSerializer,
     SetEmailSerializer,
-    VerifyEmailCodeSerializer
+    VerifyEmailCodeSerializer,
 )
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
@@ -49,7 +49,7 @@ class CreateUserView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        send_confirmation_email.delay(user)
+        send_confirmation_email.delay(user.id)
         log_event(self.request, user, "register")
 
 
@@ -103,23 +103,26 @@ class ChangePasswordView(APIView):
     def post(self, request):
         user = request.user
         serializer = ChangePasswordSerializer(data=request.data)
+
         if serializer.is_valid():
-            if not user.check_password(serializer.validated_data["old_password"]):
+            print('A')
+            if not user.check_password(serializer.validated_data["current_password"]):
+                print("B")
                 return Response(
-                    {"old_password": ["Wrong password."]},
+                    {"current_password": ["Wrong password."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
+            print("C")
             user.set_password(serializer.validated_data["new_password"])
             user.save()
 
-            send_change_password_email.delay(user)
+            send_change_password_email.delay(user.id)
 
             log_event(request, user, "password_change")
             return Response(
                 {"detail": "Password successfully changed."}, status=status.HTTP_200_OK
             )
-
+        print("D")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -129,9 +132,10 @@ class PasswordResetView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
+        print(email)
         try:
             user = User.objects.get(email=email)
-            send_password_reset_email.delay(user)
+            send_password_reset_email.delay(user.id)
         except User.DoesNotExist:
             pass
 
@@ -152,7 +156,7 @@ class PasswordResetConfirmView(APIView):
 
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
+            user = User.objects.get(id=uid)
 
             if not default_token_generator.check_token(user, token):
                 return Response(
@@ -231,13 +235,13 @@ class EmailVerificationView(APIView):
 
 class UserSettingsView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class= UserSettingsSerializer
+    serializer_class = UserSettingsSerializer
+
     def get_object(self):
         return self.request.user.settings
-    
+
     def perform_update(self, serializer):
         return serializer.save()
-    
 
 
 class SetEmailView(APIView):
@@ -252,10 +256,12 @@ class SetEmailView(APIView):
 
 
 class VerifyEmailCodeView(APIView):
-    permission_classes =[IsAuthenticated]
-    
-    def post(self,request):
-        serializer=VerifyEmailCodeSerializer(data=request.data, context={'request': request})
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = VerifyEmailCodeSerializer(
+            data=request.data, context={"request": request}
+        )
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response({"detail": "Email updated successfully."})

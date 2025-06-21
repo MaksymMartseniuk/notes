@@ -36,9 +36,7 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'drf_social_oauth2.authentication.SocialAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
+    
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.UserRateThrottle',
     ],
@@ -46,11 +44,11 @@ REST_FRAMEWORK = {
         'user': '100000000/day',
         'register': '20/minute',
         'profile': '30/minute',
-        'change_password': '1/minute',
+        'change_password': '10/minute',
         'token': '10/minute',
         'token_refresh': '30/minute',
-        'password_reset': '3/hour',
-        'password_reset_confirm': '3/hour',
+        'password_reset': '100/hour',
+        'password_reset_confirm': '100/hour',
         'social_token': '5/minute',
         'social_convert': '10/minute',
         'social_revoke': '10/minute',

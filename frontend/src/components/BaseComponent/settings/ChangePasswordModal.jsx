@@ -1,12 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import api from "../../../api";
 
 export default function ChangePasswordModal({ onClose }) {
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^])[A-Za-z\d@$!%*?&#^]{8,}$/;
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const handlePasswordCheck = async (e) => {};
+  const [error, setError] = useState(null);
+
+  const handlePasswordCheck = async (e) => {
+    e.preventDefault();
+
+    if (!passwordRegex.test(newPassword)) {
+      setError("New password does not meet complexity requirements.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setError("New passwords do not match.");
+      return;
+    }
+
+    try {
+      await api.post("/api/user/change_password/", {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+
+      
+      onClose();
+    } catch (err) {
+      setError("Failed to change password. Please check current password.");
+    }
+  };
+
+  useEffect(() => {
+    if (
+      error &&
+      passwordRegex.test(newPassword) &&
+      newPassword === confirmNewPassword
+    ) {
+      setError(null);
+    }
+  }, [newPassword, confirmNewPassword, error]);
+
   return (
     <>
       <div className="dark-overlay" onClick={onClose}></div>
@@ -49,11 +88,12 @@ export default function ChangePasswordModal({ onClose }) {
             id="confirmNewPassword"
             value={confirmNewPassword}
             onChange={(e) => {
-              setconfirmNewPassword(e.target.value);
+              setConfirmNewPassword(e.target.value);
             }}
             autoComplete="new-password"
             required
           ></input>
+          {error && <div className="form-error">{error}</div>}
           <button type="submit">Change Password</button>
         </form>
       </div>
