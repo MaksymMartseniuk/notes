@@ -105,14 +105,14 @@ class ChangePasswordView(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
 
         if serializer.is_valid():
-            print('A')
+            
             if not user.check_password(serializer.validated_data["current_password"]):
-                print("B")
+                
                 return Response(
                     {"current_password": ["Wrong password."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            print("C")
+            
             user.set_password(serializer.validated_data["new_password"])
             user.save()
 
@@ -122,7 +122,7 @@ class ChangePasswordView(APIView):
             return Response(
                 {"detail": "Password successfully changed."}, status=status.HTTP_200_OK
             )
-        print("D")
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -266,3 +266,25 @@ class VerifyEmailCodeView(APIView):
             serializer.save()
             return Response({"detail": "Email updated successfully."})
         return Response(serializer.errors, status=400)
+
+
+
+class ChangeUsernameView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user 
+
+    def update(self, request, *args, **kwargs):
+        if "username" not in request.data:
+            return Response(
+                {"detail": "Поле 'username' є обов'язковим."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

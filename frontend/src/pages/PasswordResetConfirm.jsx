@@ -59,6 +59,7 @@ export default function PasswordResetConfirm() {
                 </div>
             )}
             <button type="submit" className="form-button" disabled={loading}>
+                Change Password
             </button>
             </form>
             
