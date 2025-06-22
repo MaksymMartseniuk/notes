@@ -18,64 +18,60 @@ export default function AccountSecurity() {
         setEmail(response.data.email);
         setUsername(response.data.username);
       } catch (error) {
-        console.error("Помилка при отриманні email користувача:", error);
+        console.error("Помилка при отриманні даних користувача:", error);
       }
     };
     fetchUser();
   }, []);
 
   return (
-  <div className="account-security">
-    <h3>Account security</h3>
+    <div className="account-security">
+      <h3>Account security</h3>
 
-    <div className="security-row">
-      <div>
-        <p className="security-label">Username</p>
-        <p className="security-value">{username}</p>
+      <div className="security-row">
+        <div>
+          <p className="security-label">Username</p>
+          <p className="security-value">{username}</p>
+        </div>
+        <button onClick={() => setUsernameModal(true)}>Change username</button>
       </div>
-      <button onClick={() => setUsernameModal(true)}>Change username</button>
-    </div>
 
-    <div className="security-row">
-      <div>
-        <p className="security-label">Email</p>
-        <p className="security-value">{email}</p>
+      <div className="security-row">
+        <div>
+          <p className="security-label">Email</p>
+          <p className="security-value">{email}</p>
+        </div>
+        <button onClick={() => setShowEmailModal(true)}>Change email</button>
       </div>
-      <button onClick={() => setShowEmailModal(true)}>Change email</button>
-    </div>
 
-    <div className="security-row">
-      <div>
-        <p className="security-label">Password</p>
-        <p className="security-description">
-          Change your password to login to your account.
-        </p>
+      <div className="security-row">
+        <div>
+          <p className="security-label">Password</p>
+          <p className="security-description">
+            Change your password to login to your account.
+          </p>
+        </div>
+        <button onClick={() => setShowPasswordModal(true)}>Change password</button>
       </div>
-      <button onClick={() => setShowPasswordModal(true)}>
-        Change password
-      </button>
+
+      {showUsernameModal && (
+        <ChangeUsernameModal
+          username={username}
+          onClose={() => setUsernameModal(false)}
+          onUsernameChange={setUsername}
+        />
+      )}
+
+      {showEmailModal && (
+        <ChangeEmailModal
+          email={email}
+          onClose={() => setShowEmailModal(false)}
+        />
+      )}
+
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
     </div>
-
-    {showUsernameModal && (
-      <ChangeUsernameModal
-        username={username}
-        onClose={() => setUsernameModal(false)}
-      />
-    )}
-
-    {showEmailModal && (
-      <ChangeEmailModal
-        email={email}
-        onClose={() => setShowEmailModal(false)}
-      />
-    )}
-
-    {showPasswordModal && (
-      <ChangePasswordModal
-        onClose={() => setShowPasswordModal(false)}
-      />
-    )}
-  </div>
-);
-
+  );
 }

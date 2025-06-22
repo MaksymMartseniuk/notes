@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import api from "../../../api";
 
-export default function ChangeUsernameModal({ username, onClose }) {
+export default function ChangeUsernameModal({ username, onClose, onUsernameChange }) {
   const [newUsername, setNewUsername] = useState("");
   const handleChangeUsername = async (e) => {
     e.preventDefault();
@@ -10,6 +10,8 @@ export default function ChangeUsernameModal({ username, onClose }) {
       await api.put("/api/user/change_username/", {
         username: newUsername,
       });
+      onUsernameChange(response.data.username);
+      onClose();
     } catch (ex) {}
   };
   return (

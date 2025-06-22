@@ -9,6 +9,7 @@ from .serializers import (
     UserSettingsSerializer,
     SetEmailSerializer,
     VerifyEmailCodeSerializer,
+    AutoSaveSettingsSerializer
 )
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
@@ -286,5 +287,15 @@ class ChangeUsernameView(generics.UpdateAPIView):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class AutoSaveSettingsView(APIView):
+    permission_classes=[IsAuthenticated]
+    
+    def get(self,request):
+        try:
+            settings=request.user.usersettings
+        except UserSettings.DoesNotExist:
+            return Response({"detail": "User settings not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer=AutoSaveSettingsSerializer(settings)
+        return Response(serializer.data,status=status.HTTP_200_OK)

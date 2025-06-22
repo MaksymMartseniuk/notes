@@ -6,7 +6,7 @@ from django.utils.crypto import get_random_string
 from .loging import log_event
 from django.core.cache import cache
 from .tasks import send_email_confirmation_code
-
+from .models import UserSettings
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -42,6 +42,13 @@ class UserSettingsSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = "__all__"
         read_only_fields = ["user"]
+        
+class AutoSaveSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSettings
+        fields = ['autosave_enabled', 'autosave_interval_minutes']
+
+
 
 
 class ChangePasswordSerializer(serializers.Serializer):
