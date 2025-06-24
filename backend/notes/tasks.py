@@ -25,7 +25,6 @@ def save_note_from_cache(note_id, data):
     cache.delete(f"note_buffer:{note_id}")
     cache.delete(f"note_task_id:{note_id}")
 
-    # Оновлюємо кеш всіх нотаток користувача
     notes_queryset = Note.objects.filter(author=note.author, is_deleted=False)
     notes = []
 

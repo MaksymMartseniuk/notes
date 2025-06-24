@@ -12,6 +12,7 @@ from celery.result import AsyncResult
 from .tasks import save_note_from_cache
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from Users_Api.models import UserSettings
 # Create your views here.
 class NoteListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -82,18 +83,29 @@ class NoteGetOrCreateView(APIView):
         cache_key = f"note_buffer:{note.id}"
         task_id_key = f"note_task_id:{note.id}"
 
+        try:
+            user_settings=request.user.usersettings
+        except UserSettings.DoesNotExist:
+            user_settings= None
+        
+        if user_settings and not user_settings.autosave_enabled:
+            cache.set(cache_key, serializer.validated_data, timeout=None)
+            cache.delete(task_id_key)
+            return Response({"detail": "Автозбереження вимкнено. Дані кешовано."}, status=status.HTTP_200_OK)
         old_task_id = cache.get(task_id_key)
         if old_task_id:
             AsyncResult(old_task_id).revoke(terminate=True)
-            
+
+        delay_seconds = (user_settings.autosave_interval_minutes * 60 if user_settings and user_settings.autosave_enabled else 300)
+
         task = save_note_from_cache.apply_async(
             args=[note.id, serializer.validated_data],
-            countdown=300
+            countdown=delay_seconds
         )
 
         safe_data = json.loads(json.dumps(serializer.validated_data, cls=DjangoJSONEncoder))
-        cache.set(cache_key, safe_data, timeout=600)
-        cache.set(task_id_key, task.id, timeout=600)
+        cache.set(cache_key, safe_data, timeout=delay_seconds+60)
+        cache.set(task_id_key, task.id, timeout=delay_seconds+60)
 
         self._update_notes_cache(request.user)
 
