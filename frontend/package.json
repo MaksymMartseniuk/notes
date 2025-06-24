@@ -13,6 +13,7 @@
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@radix-ui/react-switch": "^1.2.5",
     "@react-oauth/google": "^0.12.1",
     "@tiptap/extension-image": "^2.12.0",
     "@tiptap/pm": "^2.12.0",
