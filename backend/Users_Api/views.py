@@ -133,7 +133,6 @@ class PasswordResetView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-        print(email)
         try:
             user = User.objects.get(email=email)
             send_password_reset_email.delay(user.id)
@@ -299,3 +298,11 @@ class AutoSaveSettingsView(APIView):
             return Response({"detail": "User settings not found."}, status=status.HTTP_404_NOT_FOUND)
         serializer=AutoSaveSettingsSerializer(settings)
         return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    def put(self,request):
+        settings, created = UserSettings.objects.get_or_create(user=request.user)
+        serializer = AutoSaveSettingsSerializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
