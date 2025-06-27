@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPen,
@@ -21,7 +21,7 @@ import SettingsMenu from "./BaseComponent/SettingsMenu";
 import DeleteMenu from "./BaseComponent/DeleteMenu";
 import ContentMenu from "./BaseComponent/ContentMenu";
 import VersionNote from "./BaseComponent/VersionNote";
-
+import ImportSaveModal from "./BaseComponent/ImportSaveModal";
 export default function Base() {
   const { user, loading } = useUser();
   const [notes, setNotes] = useState([]);
@@ -50,7 +50,14 @@ export default function Base() {
 
   const [deletedNotes, setDeletedNotes] = useState([]);
   const [openSettingsMenu, setOpenSettingsMenu] = useState(false);
+  const [importSaveModalOpen, setImportSaveModalOpen] = useState(false);
+  const [importSaveModalPosition, setimportSaveModalPosition] = useState({
+    top: 0,
+    left: 0,
+  });
   const navigate = useNavigate();
+
+
 
   const fetchNotes = () => {
     api
@@ -145,6 +152,18 @@ export default function Base() {
     }
     setOpenSelectVersionNote(true);
   };
+
+  const handleImportSaveButtonClick = (e) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setimportSaveModalPosition({
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX,
+    });
+  
+    setImportSaveModalOpen(true);
+  }
+
   const handleDeleteButtonClick = (e) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
@@ -236,7 +255,7 @@ export default function Base() {
             className="notes-sidebar-swicher-button"
             onClick={handleCreateNote}
           >
-            <FontAwesomeIcon icon={faPen} />
+            <FontAwesomeIcon icon={faPen} className="button-icon" />
           </button>
         </div>
 
@@ -258,6 +277,7 @@ export default function Base() {
                 <div className="icons-wrapper">
                   {/* 
                   <FontAwesomeIcon
+                  className="button-icon"
                     icon={faArrowDown}
                     className="note-sidebar-icon"
                     onClick={(e) => e.stopPropagation()}
@@ -267,7 +287,7 @@ export default function Base() {
                   {!openContentMenu && (
                     <FontAwesomeIcon
                       icon={faEllipsis}
-                      className="note-sidebar-icon"
+                      className="note-sidebar-icon button-icon"
                       onClick={(e) => {
                         setOpenContentMenu(true);
                         handleContentMenuClick(e, note.uuid);
@@ -277,7 +297,7 @@ export default function Base() {
                   {!openContentMenu && (
                     <FontAwesomeIcon
                       icon={faPlus}
-                      className="note-sidebar-icon"
+                      className="note-sidebar-icon button-icon"
                       onClick={(e) => e.stopPropagation()}
                     />
                   )}
@@ -320,17 +340,27 @@ export default function Base() {
             </h2>
             <div className="header-note-icons">
               <FontAwesomeIcon
+                className="button-icon"
                 icon={faClockRotateLeft}
                 ref={clockButtonRef}
                 onClick={handleClockButtonClick}
                 style={{ cursor: "pointer" }}
               />
               <FontAwesomeIcon
+                className="button-icon"
                 icon={isFavorite ? faStarSolid : faStarRegular}
                 onClick={toggleFavorite}
                 style={{
                   cursor: "pointer",
-                  color: isFavorite ? "gold" : "gray",
+                  color: isFavorite ? "gold" : "white",
+                }}
+              />
+              <FontAwesomeIcon
+                className="button-icon"
+                icon={faEllipsis}
+                style={{ cursor: "pointer" }}
+                onClick={(e) => {
+                  handleImportSaveButtonClick(e);
                 }}
               />
             </div>
@@ -373,6 +403,13 @@ export default function Base() {
       {openSettingsMenu && (
         <SettingsMenu onClose={() => setOpenSettingsMenu(false)} />
       )}
+      {importSaveModalOpen && (
+        <ImportSaveModal
+          position={importSaveModalPosition}
+          onClose={() => setImportSaveModalOpen(false)}
+        />
+      )}
+
     </div>
   );
 }
