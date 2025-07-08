@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -8,15 +9,19 @@ import { ACCESS_TOKEN } from "../constants";
 import "../styles/NotesCreate.css";
 import "../styles/Tiptap.css";
 import { createPortal } from "react-dom";
+import { faArrowsAlt } from "@fortawesome/free-solid-svg-icons";
 
 export default function NotesCreate() {
-  const { fetchNotes } = useOutletContext();
+  const { fetchNotes, registerSaveHandle } = useOutletContext();
   const { uuid } = useParams();
 
   const [note, setNote] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
   const [slashCommandOpen, setSlashCommandOpen] = useState(false);
-  const [slashCommandPosition, setSlashCommandPosition] = useState({ x: 0, y: 0 });
+  const [slashCommandPosition, setSlashCommandPosition] = useState({
+    x: 0,
+    y: 0,
+  });
   const [imageMenuOpen, setImageMenuOpen] = useState(false);
   const [imageMenuPosition, setImageMenuPosition] = useState({ x: 0, y: 0 });
   const [imageMode, setImageMode] = useState("url");
@@ -35,7 +40,8 @@ export default function NotesCreate() {
         if (event.key === "/") {
           const { from } = editor.state.selection;
           const coords = editor.view.coordsAtPos(from);
-          const editorRect = editor.view.dom.parentElement.getBoundingClientRect();
+          const editorRect =
+            editor.view.dom.parentElement.getBoundingClientRect();
 
           setSlashCommandPosition({ x: coords.left, y: coords.bottom });
           setImageMenuPosition({
@@ -53,20 +59,19 @@ export default function NotesCreate() {
   });
 
   useEffect(() => {
-  if (!uuid) return;
+    if (!uuid) return;
 
-  api
-    .get(`/notes-api/notes/${uuid}/`, {
-      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-    })
-    .then((res) => {
-      setNote(res.data);
-      setLoading(true);
-      fetchNotes();
-    })
-    .catch((err) => console.error("Помилка завантаження нотатки:", err));
-}, [uuid]);
-
+    api
+      .get(`/notes-api/notes/${uuid}/`, {
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      })
+      .then((res) => {
+        setNote(res.data);
+        setLoading(true);
+        fetchNotes();
+      })
+      .catch((err) => console.error("Помилка завантаження нотатки:", err));
+  }, [uuid]);
 
   useEffect(() => {
     if (!loading) return;
@@ -156,6 +161,26 @@ export default function NotesCreate() {
 
     setSlashCommandOpen(false);
   };
+  const saveHandle = useCallback(async () => {
+    await api
+      .put(
+        `/notes-api/notes/${uuid}/?force_save=true`,
+        {
+          ...note,
+          title: note.title || "Нова нотатка",
+        },
+        {
+          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+        }
+      )
+      .then(fetchNotes)
+      .catch(() => {});
+  }, [uuid, note, fetchNotes]);
+  
+  useEffect(() => {
+    registerSaveHandle(saveHandle);
+    return () => registerSaveHandle(() => Promise.resolve());
+  }, [registerSaveHandle, saveHandle]);
   return (
     <div className="notes-create-container hide-scrollbar">
       <textarea
@@ -184,11 +209,21 @@ export default function NotesCreate() {
                 <div className="slash-menu-scroll">
                   <div className="slash-menu-group">
                     <div className="slash-menu-group-title">Основні</div>
-                    <div onClick={() => insertCommand("Heading 1")}>Heading 1</div>
-                    <div onClick={() => insertCommand("Heading 2")}>Heading 2</div>
-                    <div onClick={() => insertCommand("Heading 3")}>Heading 3</div>
-                    <div onClick={() => insertCommand("Heading 4")}>Heading 4</div>
-                    <div onClick={() => insertCommand("Bullet list")}>Bullet list</div>
+                    <div onClick={() => insertCommand("Heading 1")}>
+                      Heading 1
+                    </div>
+                    <div onClick={() => insertCommand("Heading 2")}>
+                      Heading 2
+                    </div>
+                    <div onClick={() => insertCommand("Heading 3")}>
+                      Heading 3
+                    </div>
+                    <div onClick={() => insertCommand("Heading 4")}>
+                      Heading 4
+                    </div>
+                    <div onClick={() => insertCommand("Bullet list")}>
+                      Bullet list
+                    </div>
                     <div onClick={() => insertCommand("Цитата")}>Цитата</div>
                   </div>
                   <div className="slash-menu-group">

@@ -55,9 +55,9 @@ export default function Base() {
     top: 0,
     left: 0,
   });
+
+  const saveHandleRef = useRef(() => Promise.resolve());
   const navigate = useNavigate();
-
-
 
   const fetchNotes = () => {
     api
@@ -160,9 +160,9 @@ export default function Base() {
       top: rect.bottom + window.scrollY,
       left: rect.left + window.scrollX,
     });
-  
+
     setImportSaveModalOpen(true);
-  }
+  };
 
   const handleDeleteButtonClick = (e) => {
     e.stopPropagation();
@@ -238,6 +238,19 @@ export default function Base() {
       })
       .catch((err) => console.error("Помилка відновлення нотатки:", err));
   };
+
+  const registerSaveHandle = (fn) => {
+    saveHandleRef.current = fn;
+  };
+
+  const handleSaveHandle = async () => {
+  try {
+    await saveHandleRef.current();
+    alert("Нотатку збережено");
+  } catch (error) {
+    console.error("Error executing save handle:", error);
+  }
+};
 
   if (loading) return;
   if (!user) return;
@@ -368,7 +381,7 @@ export default function Base() {
         )}
 
         <main className="main-notes-container">
-          <Outlet context={{ fetchNotes }} />
+          <Outlet context={{ fetchNotes, registerSaveHandle }} />
         </main>
       </div>
 
@@ -407,9 +420,9 @@ export default function Base() {
         <ImportSaveModal
           position={importSaveModalPosition}
           onClose={() => setImportSaveModalOpen(false)}
+          onSave={handleSaveHandle}
         />
       )}
-
     </div>
   );
 }

@@ -13,6 +13,8 @@ from .tasks import save_note_from_cache
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from Users_Api.models import UserSettings
+
+
 # Create your views here.
 class NoteListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -35,18 +37,19 @@ class NoteListView(APIView):
             buffer_key = f"note_buffer:{note.id}"
             buffered_data = cache.get(buffer_key)
             if buffered_data:
-                notes.append({
-                    'id': note.id,
-                    'uuid': str(note.uuid),
-                    'title': buffered_data.get('title', note.title),
-                    'content': buffered_data.get('content', note.content),
-                    'updated_at': note.updated_at.isoformat(),
-                    'created_at': note.created_at.isoformat(),
-                })
+                notes.append(
+                    {
+                        "id": note.id,
+                        "uuid": str(note.uuid),
+                        "title": buffered_data.get("title", note.title),
+                        "content": buffered_data.get("content", note.content),
+                        "updated_at": note.updated_at.isoformat(),
+                        "created_at": note.created_at.isoformat(),
+                    }
+                )
             else:
                 notes.append(NoteSerializer(note).data)
-        return sorted(notes, key=lambda x: x['updated_at'], reverse=True)
-
+        return sorted(notes, key=lambda x: x["updated_at"], reverse=True)
 
 
 class NoteGetOrCreateView(APIView):
@@ -57,11 +60,14 @@ class NoteGetOrCreateView(APIView):
         cache_key = f"note_buffer:{note.id}"
         cached_data = cache.get(cache_key)
         if cached_data:
-            return Response({
-                'id': note.id,
-                'uuid': str(note.uuid),
-                **cached_data,
-            }, status=status.HTTP_206_PARTIAL_CONTENT)
+            return Response(
+                {
+                    "id": note.id,
+                    "uuid": str(note.uuid),
+                    **cached_data,
+                },
+                status=status.HTTP_206_PARTIAL_CONTENT,
+            )
         return Response(NoteSerializer(note).data, status=status.HTTP_200_OK)
 
     def post(self, request, uuid):
@@ -79,59 +85,80 @@ class NoteGetOrCreateView(APIView):
         note = get_object_or_404(Note, uuid=uuid, author=request.user)
         serializer = NoteSerializer(note, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-
+        print(f"1 Updating note {note.id} with data: {serializer.validated_data}")
         cache_key = f"note_buffer:{note.id}"
         task_id_key = f"note_task_id:{note.id}"
-
+        force_save = request.query_params.get("force_save") == "true"
+        print(f"Force save: {force_save}")
         try:
-            user_settings=request.user.usersettings
+            user_settings = request.user.usersettings
         except UserSettings.DoesNotExist:
-            user_settings= None
-        
-        if user_settings and not user_settings.autosave_enabled:
-            cache.set(cache_key, serializer.validated_data, timeout=None)
-            cache.delete(task_id_key)
-            return Response({"detail": "Автозбереження вимкнено. Дані кешовано."}, status=status.HTTP_200_OK)
+            user_settings = None
+
+   
         old_task_id = cache.get(task_id_key)
         if old_task_id:
             AsyncResult(old_task_id).revoke(terminate=True)
+            cache.delete(task_id_key)
 
-        delay_seconds = (user_settings.autosave_interval_minutes * 60 if user_settings and user_settings.autosave_enabled else 300)
+        print(f"2 Note {note.id} updated with data: {serializer.validated_data}")
+        if user_settings:
+            cache.set(cache_key, serializer.validated_data, timeout=None)
+
+            if force_save:
+                print("3 Force saving note immediately.")
+                print(f"4 Note ID: {note.id}, Data: {serializer.validated_data}")
+                task = save_note_from_cache.apply_async(
+                    args=[note.id, serializer.validated_data],
+                    countdown=0
+                )
+                cache.set(task_id_key, task.id, timeout=600)
+
+            return Response(
+                {"detail": "Дані кешовано" + (" і передано до збереження." if force_save else ".")},
+                status=status.HTTP_200_OK
+            )
+
+        delay_seconds = (
+            user_settings.autosave_interval_minutes * 60
+            if user_settings and user_settings.autosave_enabled
+            else 300
+        )
 
         task = save_note_from_cache.apply_async(
             args=[note.id, serializer.validated_data],
             countdown=delay_seconds
         )
 
-        safe_data = json.loads(json.dumps(serializer.validated_data, cls=DjangoJSONEncoder))
-        cache.set(cache_key, safe_data, timeout=delay_seconds+60)
-        cache.set(task_id_key, task.id, timeout=delay_seconds+60)
+        safe_data = json.loads(
+            json.dumps(serializer.validated_data, cls=DjangoJSONEncoder)
+        )
+        cache.set(cache_key, safe_data, timeout=delay_seconds + 60)
+        cache.set(task_id_key, task.id, timeout=delay_seconds + 60)
 
         self._update_notes_cache(request.user)
 
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
+
     def delete(self, request, uuid):
         note = get_object_or_404(Note, uuid=uuid, author=request.user)
         cache_key = f"note_buffer:{note.id}"
-        
+
         cached_data = cache.get(cache_key)
         if cached_data:
             data_to_save = cached_data.copy()
         else:
             data_to_save = NoteSerializer(note).data
-        data_to_save['is_deleted'] = True
+        data_to_save["is_deleted"] = True
         serializer = NoteSerializer(note, data=data_to_save, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        
+
         cache.set(cache_key, data_to_save, timeout=600)
         self._update_notes_cache(request.user)
-        
+
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
 
     def _update_notes_cache(self, user):
         notes_queryset = Note.objects.filter(author=user, is_deleted=False)
@@ -140,18 +167,20 @@ class NoteGetOrCreateView(APIView):
             buffer_key = f"note_buffer:{note.id}"
             buffered_data = cache.get(buffer_key)
             if buffered_data:
-                notes.append({
-                    'id': note.id,
-                    'uuid': str(note.uuid),
-                    'title': buffered_data.get('title', note.title),
-                    'content': buffered_data.get('content', note.content),
-                    'updated_at': note.updated_at.isoformat(),
-                    'created_at': note.created_at.isoformat(),
-                })
+                notes.append(
+                    {
+                        "id": note.id,
+                        "uuid": str(note.uuid),
+                        "title": buffered_data.get("title", note.title),
+                        "content": buffered_data.get("content", note.content),
+                        "updated_at": note.updated_at.isoformat(),
+                        "created_at": note.created_at.isoformat(),
+                    }
+                )
             else:
                 notes.append(NoteSerializer(note).data)
 
-        notes = sorted(notes, key=lambda x: x['updated_at'], reverse=True)
+        notes = sorted(notes, key=lambda x: x["updated_at"], reverse=True)
         cache.set(f"user_notes:{user.id}", notes, timeout=600)
 
 
@@ -160,7 +189,9 @@ class DeleteNoteListView(APIView):
 
     def get(self, request):
         user = request.user
-        notes = Note.objects.filter(author=user, is_deleted=True).order_by('-updated_at')
+        notes = Note.objects.filter(author=user, is_deleted=True).order_by(
+            "-updated_at"
+        )
         serializer = NoteSerializer(notes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -169,7 +200,7 @@ class NoteRestoreView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, uuid):
-        
+
         note = get_object_or_404(Note, uuid=uuid, author=request.user, is_deleted=True)
         note.is_deleted = False
         note.save(update_fields=["is_deleted"])
@@ -181,7 +212,6 @@ class NoteRestoreView(APIView):
 
         return Response(NoteSerializer(note).data, status=200)
 
-
     def _update_notes_cache(self, user):
         notes_queryset = Note.objects.filter(author=user, is_deleted=False)
         notes = []
@@ -189,19 +219,22 @@ class NoteRestoreView(APIView):
             buffer_key = f"note_buffer:{note.id}"
             buffered_data = cache.get(buffer_key)
             if buffered_data:
-                notes.append({
-                    'id': note.id,
-                    'uuid': str(note.uuid),
-                    'title': buffered_data.get('title', note.title),
-                    'content': buffered_data.get('content', note.content),
-                    'updated_at': note.updated_at.isoformat(),
-                    'created_at': note.created_at.isoformat(),
-                })
+                notes.append(
+                    {
+                        "id": note.id,
+                        "uuid": str(note.uuid),
+                        "title": buffered_data.get("title", note.title),
+                        "content": buffered_data.get("content", note.content),
+                        "updated_at": note.updated_at.isoformat(),
+                        "created_at": note.created_at.isoformat(),
+                    }
+                )
             else:
                 notes.append(NoteSerializer(note).data)
 
-        notes = sorted(notes, key=lambda x: x['updated_at'], reverse=True)
+        notes = sorted(notes, key=lambda x: x["updated_at"], reverse=True)
         cache.set(f"user_notes:{user.id}", notes, timeout=600)
+
 
 class NoteVersionListView(APIView):
     permission_classes = [IsAuthenticated]

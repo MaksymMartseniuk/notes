@@ -21,11 +21,11 @@ djangorestframework-simplejwt = "*"
 unidecode = "*"
 redis = "*"
 django-redis = "*"
-celery = "*"
 django-celery-results = "*"
 django-celery-beat = "*"
 flower = "*"
 django-extensions = "*"
+celery = "*"
 
 [dev-packages]
 
