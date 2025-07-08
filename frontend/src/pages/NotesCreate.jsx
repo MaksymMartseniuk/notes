@@ -1,27 +1,22 @@
 import { useState, useEffect, useRef } from "react";
-import { useCallback } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import api from "../api";
+import useNoteBuffer from "../hooks/useNoteBuffer";
 import { ACCESS_TOKEN } from "../constants";
 import "../styles/NotesCreate.css";
 import "../styles/Tiptap.css";
 import { createPortal } from "react-dom";
-import { faArrowsAlt } from "@fortawesome/free-solid-svg-icons";
 
 export default function NotesCreate() {
-  const { fetchNotes, registerSaveHandle } = useOutletContext();
+  const { fetchNotes, registerSaveHandle, userSettings } = useOutletContext();
   const { uuid } = useParams();
 
-  const [note, setNote] = useState({ title: "", content: "" });
+  const [noteData, setNoteData] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
   const [slashCommandOpen, setSlashCommandOpen] = useState(false);
-  const [slashCommandPosition, setSlashCommandPosition] = useState({
-    x: 0,
-    y: 0,
-  });
+  const [slashCommandPosition, setSlashCommandPosition] = useState({ x: 0, y: 0 });
   const [imageMenuOpen, setImageMenuOpen] = useState(false);
   const [imageMenuPosition, setImageMenuPosition] = useState({ x: 0, y: 0 });
   const [imageMode, setImageMode] = useState("url");
@@ -29,19 +24,26 @@ export default function NotesCreate() {
 
   const titleRef = useRef(null);
 
+  const { updateBuffer, forceSave, isSaving, lastSavedAt } = useNoteBuffer({
+    uuid,
+    accessToken: ACCESS_TOKEN,
+    fetchNotes,
+    autosaveEnabled: userSettings?.autosave_enabled,
+    autosaveDelay: (userSettings?.autosave_interval_minutes || 5) * 60000,
+  });
+
   const editor = useEditor({
     extensions: [StarterKit, Image],
-    content: note.content || "",
+    content: noteData.content || "",
     onUpdate: ({ editor }) => {
-      setNote((prev) => ({ ...prev, content: editor.getHTML() }));
+      updateBuffer({ content: editor.getHTML() });
     },
     onCreate: ({ editor }) => {
       editor.view.dom.addEventListener("keydown", (event) => {
         if (event.key === "/") {
           const { from } = editor.state.selection;
           const coords = editor.view.coordsAtPos(from);
-          const editorRect =
-            editor.view.dom.parentElement.getBoundingClientRect();
+          const editorRect = editor.view.dom.parentElement.getBoundingClientRect();
 
           setSlashCommandPosition({ x: coords.left, y: coords.bottom });
           setImageMenuPosition({
@@ -61,12 +63,13 @@ export default function NotesCreate() {
   useEffect(() => {
     if (!uuid) return;
 
-    api
-      .get(`/notes-api/notes/${uuid}/`, {
-        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-      })
-      .then((res) => {
-        setNote(res.data);
+    fetch(`/notes-api/notes/${uuid}/`, {
+      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    })
+      .then((res) => res)
+      .then((data) => {
+        setNoteData(data);
+        updateBuffer(data);
         setLoading(true);
         fetchNotes();
       })
@@ -74,38 +77,10 @@ export default function NotesCreate() {
   }, [uuid]);
 
   useEffect(() => {
-    if (!loading) return;
-
-    const prevTitle = document.title;
-    document.title = note.title || "Нова нотатка";
-
-    const timeout = setTimeout(() => {
-      api
-        .put(
-          `/notes-api/notes/${uuid}/`,
-          {
-            ...note,
-            title: note.title || "Нова нотатка",
-          },
-          {
-            headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-          }
-        )
-        .then(fetchNotes)
-        .catch(() => {});
-    }, 500);
-
-    return () => {
-      clearTimeout(timeout);
-      document.title = prevTitle;
-    };
-  }, [note.title, note.content, uuid, loading]);
-
-  useEffect(() => {
-    if (editor && note.content !== editor.getHTML()) {
-      editor.commands.setContent(note.content || "");
+    if (editor && noteData.content !== editor.getHTML()) {
+      editor.commands.setContent(noteData.content || "");
     }
-  }, [note.content, uuid, editor]);
+  }, [noteData.content, uuid, editor]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -122,7 +97,6 @@ export default function NotesCreate() {
     if (!editor) return;
     const { state, commands } = editor;
     const { from } = state.selection;
-
     const textBefore = state.doc.textBetween(from - 1, from, "\n", "\n");
 
     if (textBefore === "/") {
@@ -161,33 +135,20 @@ export default function NotesCreate() {
 
     setSlashCommandOpen(false);
   };
-  const saveHandle = useCallback(async () => {
-    await api
-      .put(
-        `/notes-api/notes/${uuid}/?force_save=true`,
-        {
-          ...note,
-          title: note.title || "Нова нотатка",
-        },
-        {
-          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-        }
-      )
-      .then(fetchNotes)
-      .catch(() => {});
-  }, [uuid, note, fetchNotes]);
-  
+
   useEffect(() => {
-    registerSaveHandle(saveHandle);
+    // Реєструємо функцію примусового збереження з хуку в батьківському компоненті
+    registerSaveHandle(forceSave);
     return () => registerSaveHandle(() => Promise.resolve());
-  }, [registerSaveHandle, saveHandle]);
+  }, [registerSaveHandle, forceSave]);
+
   return (
     <div className="notes-create-container hide-scrollbar">
       <textarea
         ref={titleRef}
         className="note-title hide-scrollbar"
-        value={note.title}
-        onChange={(e) => setNote({ ...note, title: e.target.value })}
+        defaultValue={noteData.title}
+        onChange={(e) => updateBuffer({ title: e.target.value })}
         placeholder="Заголовок"
         rows={1}
       />
@@ -209,21 +170,11 @@ export default function NotesCreate() {
                 <div className="slash-menu-scroll">
                   <div className="slash-menu-group">
                     <div className="slash-menu-group-title">Основні</div>
-                    <div onClick={() => insertCommand("Heading 1")}>
-                      Heading 1
-                    </div>
-                    <div onClick={() => insertCommand("Heading 2")}>
-                      Heading 2
-                    </div>
-                    <div onClick={() => insertCommand("Heading 3")}>
-                      Heading 3
-                    </div>
-                    <div onClick={() => insertCommand("Heading 4")}>
-                      Heading 4
-                    </div>
-                    <div onClick={() => insertCommand("Bullet list")}>
-                      Bullet list
-                    </div>
+                    <div onClick={() => insertCommand("Heading 1")}>Heading 1</div>
+                    <div onClick={() => insertCommand("Heading 2")}>Heading 2</div>
+                    <div onClick={() => insertCommand("Heading 3")}>Heading 3</div>
+                    <div onClick={() => insertCommand("Heading 4")}>Heading 4</div>
+                    <div onClick={() => insertCommand("Bullet list")}>Bullet list</div>
                     <div onClick={() => insertCommand("Цитата")}>Цитата</div>
                   </div>
                   <div className="slash-menu-group">
@@ -253,14 +204,12 @@ export default function NotesCreate() {
           >
             <div className="image-menu-content">
               <button
-                className="image-menu-buttons-choses"
                 onClick={() => setImageMode("url")}
                 disabled={imageMode === "url"}
               >
                 З URL
               </button>
               <button
-                className="image-menu-buttons-choses"
                 onClick={() => setImageMode("upload")}
                 disabled={imageMode === "upload"}
               >
@@ -269,7 +218,6 @@ export default function NotesCreate() {
             </div>
             {imageMode === "url" ? (
               <input
-                className="image-menu-input-url"
                 type="text"
                 placeholder="http://..."
                 value={imageUrl}
@@ -290,7 +238,7 @@ export default function NotesCreate() {
                 }}
               />
             ) : (
-              <label className="image-menu-input-file">
+              <label>
                 Завантажити з ПК
                 <input
                   type="file"
