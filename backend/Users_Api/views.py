@@ -34,9 +34,10 @@ from .tasks import (
     send_confirmation_email,
     send_change_password_email,
     send_password_reset_email,
+    send_support_request_email
 )
 from .models import UserSettings
-
+from django.utils.html import escape
 
 # Create your views here.
 User = get_user_model()
@@ -306,3 +307,21 @@ class AutoSaveSettingsView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class SupportRequestView(APIView):
+   def post(self, request):
+        email = (request.data.get("email") or "").strip()
+        subject = (request.data.get("subject") or "").strip()
+        message = (request.data.get("message") or "").strip()
+
+        if not email or not subject or not message:
+            return Response({"detail": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+       
+        subject = escape(subject)
+        message = escape(message)
+
+        send_support_request_email.delay(email, subject, message)
+        return Response({"detail": "Support request sent successfully."}, status=status.HTTP_200_OK)
+        

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #fff; color: #000; }
+    .container { padding: 20px; }
+    .label { font-weight: bold; margin-top: 10px; }
+    .value { margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>New Support Request</h2>
+
+    <div>
+      <div class="label">From:</div>
+      <div class="value">{{ email }}</div>
+
+      <div class="label">Subject:</div>
+      <div class="value">{{ subject }}</div>
+
+      <div class="label">Message:</div>
+      <div class="value">{{ message }}</div>
+    </div>
+  </div>
+</body>
+</html>

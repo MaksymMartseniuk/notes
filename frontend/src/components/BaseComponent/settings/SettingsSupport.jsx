@@ -1,22 +1,44 @@
+import { useState, useEffect } from "react";
+
 import api from "../../../api";
 
-export default function SettingsSupport({ email }) {
-  const handleSubmit = (e) => {
+export default function SettingsSupport() {
+  const [email, setEmail] = useState("");
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get("api/user/me");
+        setEmail(response.data.email);
+      } catch (error) {
+        console.error("Помилка при отриманні даних користувача:", error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const subject = e.target.elements.subject.value.trim();
     const message = e.target.elements.message.value.trim();
+    if (!subject) return;
     if (!message) return;
     try {
-      const res = api.post("/support", {
-        email: email,
-        message: message,
+      const res = await api.post("api/support/", {
+        email,
+        subject,
+        message,
       });
+
       if (res.status === 200) {
         e.target.reset();
         alert("Your message has been sent successfully!");
       } else {
         alert("Failed to send your message. Please try again later.");
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Support request error:", error);
+      alert("An error occurred while sending your message.");
+    }
   };
   return (
     <div className="settings">
