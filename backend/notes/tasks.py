@@ -1,8 +1,9 @@
 from celery import shared_task
 from django.core.cache import cache
 from .serializers import NoteSerializer
-from notes.models import Note 
+from notes.models import Note
 from django.core.exceptions import ObjectDoesNotExist
+from .models import NoteVersion
 
 
 @shared_task(max_retries=3, default_retry_delay=10)
@@ -22,10 +23,11 @@ def save_note_from_cache(note_id, data):
     if tags is not None:
         note.tag.set(tags)
 
-    cache.delete(f"note_buffer:{note_id}")
-    cache.delete(f"note_task_id:{note_id}")
+    update_user_notes_cache(note.author)
 
-    notes_queryset = Note.objects.filter(author=note.author, is_deleted=False)
+
+def update_user_notes_cache(user):
+    notes_queryset = Note.objects.filter(author=user, is_deleted=False)
     notes = []
 
     for note_obj in notes_queryset:
@@ -44,4 +46,25 @@ def save_note_from_cache(note_id, data):
             notes.append(NoteSerializer(note_obj).data)
 
     notes.sort(key=lambda x: x['updated_at'], reverse=True)
-    cache.set(f"user_notes:{note.author.id}", notes, timeout=600)
+    cache.set(f"user_notes:{user.id}", notes, timeout=600)
+
+
+@shared_task(max_retries=3, default_retry_delay=10)
+def save_note_version(note_id):
+    cached_data = cache.get(f"note_buffer:{note_id}")
+    if not cached_data:
+        return
+
+    last_version = NoteVersion.objects.filter(note_id=note_id).order_by('-created_at').first()
+    if last_version and last_version.content == cached_data.get('content'):
+        return
+
+    NoteVersion.objects.create(
+        note_id=note_id,
+        title=cached_data.get('title', ''),
+        content=cached_data.get('content', ''),
+        edited_by=cached_data.get('edited_by', None)
+    )
+
+    cache.delete(f"note_buffer:{note_id}")
+    cache.delete(f"note_task_id:{note_id}")

@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.core.cache import cache
 from celery.result import AsyncResult
-from .tasks import save_note_from_cache
+from .tasks import save_note_from_cache,save_note_version
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from Users_Api.models import UserSettings
@@ -87,6 +87,7 @@ class NoteGetOrCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         cache_key = f"note_buffer:{note.id}"
         task_id_key = f"note_task_id:{note.id}"
+        version_task_id_key = f"note_version_task_id:{note.id}"
         force_save = request.query_params.get("force_save") == "true"
 
         try:
@@ -94,39 +95,46 @@ class NoteGetOrCreateView(APIView):
         except UserSettings.DoesNotExist:
             user_settings = None
 
-    # Відміна старої задачі, якщо є
         old_task_id = cache.get(task_id_key)
         if old_task_id:
             AsyncResult(old_task_id).revoke(terminate=True)
             cache.delete(task_id_key)
 
+        old_version_task_id = cache.get(version_task_id_key)
+        if old_version_task_id:
+            AsyncResult(old_version_task_id).revoke(terminate=True)
+            cache.delete(version_task_id_key)
+
         print(f"Note {note.id} updated with data: {serializer.validated_data}")
 
         if force_save:
-        # Примусове негайне збереження
-            serializer.save()  # <- додано збереження у БД
-        # Видалити кеш і задачі, бо зміни збережено
+            serializer.save()
             cache.delete(cache_key)
             cache.delete(task_id_key)
+            cache.delete(version_task_id_key)
             self._update_notes_cache(request.user)
             return Response({"detail": "Дані збережено негайно."}, status=status.HTTP_200_OK)
 
         if user_settings and user_settings.autosave_enabled:
             delay_seconds = user_settings.autosave_interval_minutes * 60
         else:
-            delay_seconds = 300 
+            delay_seconds = 300
 
         safe_data = json.loads(json.dumps(serializer.validated_data, cls=DjangoJSONEncoder))
         cache.set(cache_key, safe_data, timeout=delay_seconds + 60)
 
         task = save_note_from_cache.apply_async(args=[note.id, safe_data], countdown=delay_seconds)
+        task_version = save_note_version.apply_async(args=[note.id], countdown=delay_seconds + 1)
+
         cache.set(task_id_key, task.id, timeout=delay_seconds + 60)
+        cache.set(version_task_id_key, task_version.id, timeout=delay_seconds + 60)
 
         self._update_notes_cache(request.user)
 
-        return Response({"detail": f"Дані кешовано. Збереження відкладено на {delay_seconds} секунд."}, status=status.HTTP_200_OK)
-
-
+        return Response(
+            {"detail": f"Дані кешовано. Збереження відкладено на {delay_seconds} секунд."},
+            status=status.HTTP_200_OK
+        )
 
     def delete(self, request, uuid):
         note = get_object_or_404(Note, uuid=uuid, author=request.user)
