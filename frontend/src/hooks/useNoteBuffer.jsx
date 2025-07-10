@@ -30,7 +30,6 @@ export default function useNoteBuffer(
           )
           .then(() => {
             lastSavedRef.current = note;
-            console.log("Note saved successfully:", note);
           })
           .catch(() => {});
       }
@@ -38,4 +37,6 @@ export default function useNoteBuffer(
 
     return () => clearTimeout(timeoutRef.current);
   }, [note, enabled, noteId]);
+
+  return null;
 }

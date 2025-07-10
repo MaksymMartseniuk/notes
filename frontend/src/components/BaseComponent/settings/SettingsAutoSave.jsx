@@ -57,11 +57,9 @@ export default function SettingsAutoSave() {
   };
 
   return (
-    <div className="settings-profile">
-      <h3>User profile</h3>
+    <div className="settings">
+      <h3>AutoSave settings</h3>
       <div className="autoSave-settings">
-        <h3>AutoSave settings</h3>
-
         {loading ? (
           <p>Завантаження...</p>
         ) : (

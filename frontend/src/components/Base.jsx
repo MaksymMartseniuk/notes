@@ -319,11 +319,6 @@ export default function Base() {
             ))}
           </ul>
 
-          <h1>Public</h1>
-          <ul>
-            <li>Note A</li>
-            <li>Note B</li>
-          </ul>
 
           <ul className="bottom-list">
             <li

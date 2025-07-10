@@ -8,7 +8,11 @@
   background: rgba(0, 0, 0, 0.3);
   z-index: 999;
 }
-
+.settings h3 {
+  color: #ffffff;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
 .settings-menu {
   position: fixed;
   top: 50%;
@@ -27,6 +31,7 @@
 
 .setting-menu-side-bar {
   width: 200px;
+  min-width: 200px;
   background-color: #252525;
   padding: 24px 16px;
   border-right: 1px solid #313131;
@@ -249,4 +254,60 @@
   border-radius: 50%;
   background-color: white;
   transition: left 0.2s;
+}
+
+.settings-support {
+  padding: 1.5rem;
+  border-top: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: hidden;
+}
+.settings-support p {
+  color: #e5e5e5;
+  font-size: 16px;
+  margin: 0;
+}
+
+.settings-support h3 {
+  margin-bottom: 1rem;
+  font-size: 18px;
+  color: #e5e5e5;
+}
+
+.support-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.support-form input[type="text"]{
+  width: 100%;
+  min-width: 100px;
+  padding: 0.5rem;
+  background-color: #111;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  resize: none;
+}
+.support-form textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  background-color: #111;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  resize: vertical;
+}
+
+.support-form button {
+  align-self: flex-start;
+  padding: 0.5rem 1.2rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
