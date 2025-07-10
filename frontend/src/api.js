@@ -10,6 +10,7 @@ const PUBLIC_ENDPOINTS = [
     '/api/user/token/',
     '/api/user/password_reset_confirm/',
     '/api/user/activate/',
+    
 ];
 
 api.interceptors.request.use(

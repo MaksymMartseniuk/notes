@@ -85,60 +85,47 @@ class NoteGetOrCreateView(APIView):
         note = get_object_or_404(Note, uuid=uuid, author=request.user)
         serializer = NoteSerializer(note, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        print(f"1 Updating note {note.id} with data: {serializer.validated_data}")
         cache_key = f"note_buffer:{note.id}"
         task_id_key = f"note_task_id:{note.id}"
         force_save = request.query_params.get("force_save") == "true"
-        print(f"Force save: {force_save}")
+
         try:
             user_settings = request.user.usersettings
         except UserSettings.DoesNotExist:
             user_settings = None
 
-   
+    # Відміна старої задачі, якщо є
         old_task_id = cache.get(task_id_key)
         if old_task_id:
             AsyncResult(old_task_id).revoke(terminate=True)
             cache.delete(task_id_key)
 
-        print(f"2 Note {note.id} updated with data: {serializer.validated_data}")
-        if user_settings:
-            cache.set(cache_key, serializer.validated_data, timeout=None)
+        print(f"Note {note.id} updated with data: {serializer.validated_data}")
 
-            if force_save:
-                print("3 Force saving note immediately.")
-                print(f"4 Note ID: {note.id}, Data: {serializer.validated_data}")
-                task = save_note_from_cache.apply_async(
-                    args=[note.id, serializer.validated_data],
-                    countdown=0
-                )
-                cache.set(task_id_key, task.id, timeout=600)
+        if force_save:
+        # Примусове негайне збереження
+            serializer.save()  # <- додано збереження у БД
+        # Видалити кеш і задачі, бо зміни збережено
+            cache.delete(cache_key)
+            cache.delete(task_id_key)
+            self._update_notes_cache(request.user)
+            return Response({"detail": "Дані збережено негайно."}, status=status.HTTP_200_OK)
 
-            return Response(
-                {"detail": "Дані кешовано" + (" і передано до збереження." if force_save else ".")},
-                status=status.HTTP_200_OK
-            )
+        if user_settings and user_settings.autosave_enabled:
+            delay_seconds = user_settings.autosave_interval_minutes * 60
+        else:
+            delay_seconds = 300 
 
-        delay_seconds = (
-            user_settings.autosave_interval_minutes * 60
-            if user_settings and user_settings.autosave_enabled
-            else 300
-        )
-
-        task = save_note_from_cache.apply_async(
-            args=[note.id, serializer.validated_data],
-            countdown=delay_seconds
-        )
-
-        safe_data = json.loads(
-            json.dumps(serializer.validated_data, cls=DjangoJSONEncoder)
-        )
+        safe_data = json.loads(json.dumps(serializer.validated_data, cls=DjangoJSONEncoder))
         cache.set(cache_key, safe_data, timeout=delay_seconds + 60)
+
+        task = save_note_from_cache.apply_async(args=[note.id, safe_data], countdown=delay_seconds)
         cache.set(task_id_key, task.id, timeout=delay_seconds + 60)
 
         self._update_notes_cache(request.user)
 
-        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+        return Response({"detail": f"Дані кешовано. Збереження відкладено на {delay_seconds} секунд."}, status=status.HTTP_200_OK)
+
 
 
     def delete(self, request, uuid):

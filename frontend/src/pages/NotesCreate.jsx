@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { useCallback } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -9,7 +9,7 @@ import { ACCESS_TOKEN } from "../constants";
 import "../styles/NotesCreate.css";
 import "../styles/Tiptap.css";
 import { createPortal } from "react-dom";
-import { faArrowsAlt } from "@fortawesome/free-solid-svg-icons";
+import useNoteBuffer from "../hooks/useNoteBuffer";
 
 export default function NotesCreate() {
   const { fetchNotes, registerSaveHandle } = useOutletContext();
@@ -73,33 +73,7 @@ export default function NotesCreate() {
       .catch((err) => console.error("Помилка завантаження нотатки:", err));
   }, [uuid]);
 
-  useEffect(() => {
-    if (!loading) return;
-
-    const prevTitle = document.title;
-    document.title = note.title || "Нова нотатка";
-
-    const timeout = setTimeout(() => {
-      api
-        .put(
-          `/notes-api/notes/${uuid}/`,
-          {
-            ...note,
-            title: note.title || "Нова нотатка",
-          },
-          {
-            headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-          }
-        )
-        .then(fetchNotes)
-        .catch(() => {});
-    }, 500);
-
-    return () => {
-      clearTimeout(timeout);
-      document.title = prevTitle;
-    };
-  }, [note.title, note.content, uuid, loading]);
+  useNoteBuffer(uuid, note, loading);
 
   useEffect(() => {
     if (editor && note.content !== editor.getHTML()) {
