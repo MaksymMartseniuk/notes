@@ -50,6 +50,7 @@ export default function App() {
           >
             <Route index element={<Notes />} />
             <Route path=":uuid" element={<NotesCreate />} />
+            <Route path=":uuid/versions/:versionId" element={<NotesCreate />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

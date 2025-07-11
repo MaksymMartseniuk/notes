@@ -17,10 +17,11 @@ export default function VersionNote({
         left: position.left - 220,
       }}
     >
-      <h4>Версії нотатки</h4>
-      <ul>
+      <h1>Версії нотатки</h1>
+      <ul className="version-list">
         {versions.map((version) => (
-          <li
+          <li 
+            className="version-list-item"
             key={version.id}
             onClick={() => {
               navigate(`/notes/${selectedUuid}/versions/${version.id}`);

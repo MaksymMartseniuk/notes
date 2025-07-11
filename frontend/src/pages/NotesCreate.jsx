@@ -13,8 +13,7 @@ import useNoteBuffer from "../hooks/useNoteBuffer";
 
 export default function NotesCreate() {
   const { fetchNotes, registerSaveHandle } = useOutletContext();
-  const { uuid } = useParams();
-
+  const { uuid, versionId } = useParams();
   const [note, setNote] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
   const [slashCommandOpen, setSlashCommandOpen] = useState(false);
@@ -60,9 +59,9 @@ export default function NotesCreate() {
 
   useEffect(() => {
     if (!uuid) return;
-
+    const endpoint =versionId?`/notes-api/notes/${uuid}/versions/${versionId}/`: `/notes-api/notes/${uuid}/`;
     api
-      .get(`/notes-api/notes/${uuid}/`, {
+      .get(endpoint, {
         headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
       })
       .then((res) => {
