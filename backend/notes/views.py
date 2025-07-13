@@ -240,6 +240,16 @@ class NoteVersionListView(APIView):
         serializer = NoteVersionSerializer(versions, many=True)
         return Response(serializer.data)
 
+class NoteVersionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, uuid, version_id):
+        note = get_object_or_404(Note, uuid=uuid, author=request.user)
+        version = get_object_or_404(NoteVersion, id=version_id, note=note)
+        serializer = NoteVersionSerializer(version)
+        print(f"Retrieved version {version_id} for note {uuid}")
+        print (f"Version data: {serializer.data}")
+        return Response(serializer.data)
 
 class TagCreateView(generics.ListCreateAPIView):
     serializer_class = TagSerializer

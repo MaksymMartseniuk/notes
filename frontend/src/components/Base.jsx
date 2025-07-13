@@ -28,8 +28,8 @@ export default function Base() {
   const [noteTitle, setNoteTitle] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
   const { pathname } = useLocation();
-  const lastPathSegment = pathname.split("/").at(-1);
-  const isUuidInPath = validateUUID(lastPathSegment);
+  const uuidMatch = pathname.match(/\/notes\/([0-9a-fA-F-]{36})/);
+  const isUuidInPath = !!uuidMatch;
   const [selectedNoteUuid, setSelectedNoteUuid] = useState("");
   const [openSelectVersionNote, setOpenSelectVersionNote] = useState(false);
   const clockButtonRef = useRef(null);
@@ -244,13 +244,13 @@ export default function Base() {
   };
 
   const handleSaveHandle = async () => {
-  try {
-    await saveHandleRef.current();
-    alert("Нотатку збережено");
-  } catch (error) {
-    console.error("Error executing save handle:", error);
-  }
-};
+    try {
+      await saveHandleRef.current();
+      alert("Нотатку збережено");
+    } catch (error) {
+      console.error("Error executing save handle:", error);
+    }
+  };
 
   if (loading) return;
   if (!user) return;
@@ -318,7 +318,6 @@ export default function Base() {
               </li>
             ))}
           </ul>
-
 
           <ul className="bottom-list">
             <li

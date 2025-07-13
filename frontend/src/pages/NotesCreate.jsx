@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCallback } from "react";
-import { useParams, useOutletContext } from "react-router-dom";
+import { useParams, useOutletContext,useLocation } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -25,10 +25,11 @@ export default function NotesCreate() {
   const [imageMenuPosition, setImageMenuPosition] = useState({ x: 0, y: 0 });
   const [imageMode, setImageMode] = useState("url");
   const [imageUrl, setImageUrl] = useState("");
-
+  const location = useLocation();
   const titleRef = useRef(null);
 
   const editor = useEditor({
+    
     extensions: [StarterKit, Image],
     content: note.content || "",
     onUpdate: ({ editor }) => {
@@ -68,9 +69,10 @@ export default function NotesCreate() {
         setNote(res.data);
         setLoading(true);
         fetchNotes();
+        console.log("Завантажено нотатку:", res.data);
       })
       .catch((err) => console.error("Помилка завантаження нотатки:", err));
-  }, [uuid]);
+  }, [uuid,versionId]);
 
   useNoteBuffer(uuid, note, loading);
 
@@ -155,7 +157,7 @@ export default function NotesCreate() {
     return () => registerSaveHandle(() => Promise.resolve());
   }, [registerSaveHandle, saveHandle]);
   return (
-    <div className="notes-create-container hide-scrollbar">
+    <div className="notes-create-container hide-scrollbar" key={`${uuid}-${versionId || "current"}`}>
       <textarea
         ref={titleRef}
         className="note-title hide-scrollbar"
