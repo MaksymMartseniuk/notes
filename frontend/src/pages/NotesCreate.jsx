@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useCallback } from "react";
-import { useParams, useOutletContext,useLocation } from "react-router-dom";
+import { useParams, useOutletContext, useLocation } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -12,7 +12,7 @@ import { createPortal } from "react-dom";
 import useNoteBuffer from "../hooks/useNoteBuffer";
 
 export default function NotesCreate() {
-  const { fetchNotes, registerSaveHandle } = useOutletContext();
+  const { fetchNotes, registerSaveHandle, setNotes, selectedNoteUuid } = useOutletContext();
   const { uuid, versionId } = useParams();
   const [note, setNote] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,6 @@ export default function NotesCreate() {
   const titleRef = useRef(null);
 
   const editor = useEditor({
-    
     extensions: [StarterKit, Image],
     content: note.content || "",
     onUpdate: ({ editor }) => {
@@ -60,7 +59,9 @@ export default function NotesCreate() {
 
   useEffect(() => {
     if (!uuid) return;
-    const endpoint =versionId?`/notes-api/notes/${uuid}/versions/${versionId}/`: `/notes-api/notes/${uuid}/`;
+    const endpoint = versionId
+      ? `/notes-api/notes/${uuid}/versions/${versionId}/`
+      : `/notes-api/notes/${uuid}/`;
     api
       .get(endpoint, {
         headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
@@ -72,7 +73,7 @@ export default function NotesCreate() {
         console.log("Завантажено нотатку:", res.data);
       })
       .catch((err) => console.error("Помилка завантаження нотатки:", err));
-  }, [uuid,versionId]);
+  }, [uuid, versionId]);
 
   useNoteBuffer(uuid, note, loading);
 
@@ -151,18 +152,37 @@ export default function NotesCreate() {
       .then(fetchNotes)
       .catch(() => {});
   }, [uuid, note, fetchNotes]);
-  
+
   useEffect(() => {
     registerSaveHandle(saveHandle);
     return () => registerSaveHandle(() => Promise.resolve());
   }, [registerSaveHandle, saveHandle]);
+
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+
+    setNote((prev) => ({
+      ...prev,
+      title: newTitle,
+    }));
+
+    setNotes((prevNotes) =>
+      prevNotes.map((n) =>
+        n.uuid === selectedNoteUuid ? { ...n, title: newTitle } : n
+      )
+    );
+  };
+
   return (
-    <div className="notes-create-container hide-scrollbar" key={`${uuid}-${versionId || "current"}`}>
+    <div
+      className="notes-create-container hide-scrollbar"
+      key={`${uuid}-${versionId || "current"}`}
+    >
       <textarea
         ref={titleRef}
         className="note-title hide-scrollbar"
         value={note.title}
-        onChange={(e) => setNote({ ...note, title: e.target.value })}
+        onChange={handleTitleChange}
         placeholder="Заголовок"
         rows={1}
       />

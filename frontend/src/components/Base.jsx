@@ -375,7 +375,7 @@ export default function Base() {
         )}
 
         <main className="main-notes-container">
-          <Outlet context={{ fetchNotes, registerSaveHandle }} />
+          <Outlet context={{ fetchNotes, registerSaveHandle,notes,setNotes,selectedNoteUuid, }} />
         </main>
       </div>
 
