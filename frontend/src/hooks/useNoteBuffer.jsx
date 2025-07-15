@@ -12,9 +12,24 @@ export default function useNoteBuffer(
   const lastSavedRef = useRef(note);
 
   useEffect(() => {
-    if (!enabled) return;
-    clearTimeout(timeoutRef.current);
+    if (!noteId) {
+      return;
+    }
+    const draft=localStorage.getItem(`note-draft-${noteId}`);
+    if (draft){
+      try {
+        const parsedDraft = JSON.parse(draft);
+        if (JSON.stringify(parsedDraft) !== JSON.stringify(note)) {
+          lastSavedRef.current = parsedDraft;
+        }
+      } catch{}
+    }
+  }, [noteId]);
 
+  useEffect(() => {
+    if (!enabled || !noteId) return;
+    clearTimeout(timeoutRef.current);
+    localStorage.setItem(`note-draft-${noteId}`, JSON.stringify(note));
     timeoutRef.current = setTimeout(() => {
       if (JSON.stringify(lastSavedRef.current) !== JSON.stringify(note)) {
         api
@@ -30,6 +45,7 @@ export default function useNoteBuffer(
           )
           .then(() => {
             lastSavedRef.current = note;
+            localStorage.removeItem(`note-draft-${noteId}`);
           })
           .catch(() => {});
       }

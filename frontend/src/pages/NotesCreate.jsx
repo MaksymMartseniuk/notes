@@ -12,7 +12,8 @@ import { createPortal } from "react-dom";
 import useNoteBuffer from "../hooks/useNoteBuffer";
 
 export default function NotesCreate() {
-  const { fetchNotes, registerSaveHandle, setNotes, selectedNoteUuid } = useOutletContext();
+  const { fetchNotes, registerSaveHandle, setNotes, selectedNoteUuid } =
+    useOutletContext();
   const { uuid, versionId } = useParams();
   const [note, setNote] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,18 @@ export default function NotesCreate() {
 
   useEffect(() => {
     if (!uuid) return;
+
+    const draft = localStorage.getItem(`note-draft-${uuid}`);
+    if (draft) {
+      try {
+        const parsedDraft = JSON.parse(draft);
+        setNote(parsedDraft);
+        setLoading(true);
+        fetchNotes();
+        return;
+      } catch {}
+    }
+
     const endpoint = versionId
       ? `/notes-api/notes/${uuid}/versions/${versionId}/`
       : `/notes-api/notes/${uuid}/`;
