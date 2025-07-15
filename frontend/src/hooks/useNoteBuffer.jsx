@@ -24,6 +24,7 @@ export default function useNoteBuffer(
         }
       } catch{}
     }
+    return () => {}
   }, [noteId]);
 
   useEffect(() => {
@@ -45,7 +46,6 @@ export default function useNoteBuffer(
           )
           .then(() => {
             lastSavedRef.current = note;
-            localStorage.removeItem(`note-draft-${noteId}`);
           })
           .catch(() => {});
       }

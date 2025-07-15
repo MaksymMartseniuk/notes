@@ -59,16 +59,38 @@ export default function Base() {
   const saveHandleRef = useRef(() => Promise.resolve());
   const navigate = useNavigate();
 
-  const fetchNotes = () => {
-    api
-      .get("/notes-api/notes/")
-      .then((res) => setNotes(res.data))
-      .catch((err) => console.error(err));
-  };
+const fetchNotes = () => {
+  api
+    .get("/notes-api/notes/")
+    .then((res) => {
+      const updatedNotes = res.data.map((note) => {
+        const bufferKey = `note-draft-${note.uuid}`;
+        const draft = localStorage.getItem(bufferKey);
+        if (draft) {
+          try {
+            const parsedDraft = JSON.parse(draft);
+            if (parsedDraft.title && parsedDraft.title !== note.title) {
+              return {
+                ...note,
+                title: parsedDraft.title,
+              };
+            }
+          } catch (e) {
+            console.error("Помилка парсингу чернетки:", e);
+          }
+        }
+        return note;
+      });
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+      setNotes(updatedNotes);
+    })
+    .catch((err) => console.error("Помилка отримання нотаток:", err));
+};
+
+useEffect(() => {
+  fetchNotes();
+}, []);
+
 
   const fetchDeletedNotes = () => {
     api
@@ -106,7 +128,11 @@ export default function Base() {
       (note) => note.uuid === uuidFromPath
     );
     if (foundInNotes) {
-      setNoteTitle(foundInNotes.title);
+      const bufferKey= `note-draft-${foundInNotes.uuid}`;
+      const buffer = localStorage.getItem(bufferKey);
+      const bufferedData = buffer ? JSON.parse(buffer) : null;
+      const title = bufferedData?.title || foundInNotes.title;
+      setNoteTitle(title);
       setIsFavorite(foundInNotes.is_favorite);
       setSelectedNoteUuid(foundInNotes.uuid);
       fetchNoteVersions(foundInNotes.uuid);
