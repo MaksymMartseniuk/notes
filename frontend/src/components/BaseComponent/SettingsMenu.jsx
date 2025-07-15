@@ -3,7 +3,6 @@ import {X} from "lucide-react";
 import "../../styles/settings.css"
 import SettingsProfile from "./settings/SettingsProfile";
 import SettingsAutoSave from "./settings/SettingsAutoSave";
-import SettingsNotifications from './settings/SettingsNotifications';
 import SettingsSupport from './settings/SettingsSupport';
 
 export default function SettingsMenu({ onClose }) {
@@ -14,8 +13,6 @@ export default function SettingsMenu({ onClose }) {
         return <SettingsProfile/>
       case "AutoSave":
         return <SettingsAutoSave/>
-      case "Notifications":
-        return <SettingsNotifications/>
       case "Help & Support":
         return <SettingsSupport/>
       default:
@@ -32,7 +29,7 @@ export default function SettingsMenu({ onClose }) {
           <X className="setting-close" onClick={onClose}></X>
           </div>
           <ul className="setting-menu-list">
-            {["Profile", "AutoSave", "Notifications", "Help & Support"].map((item) => (
+            {["Profile", "AutoSave", "Help & Support"].map((item) => (
               <li
                 key={item}
                 className={`setting-menu-list-item ${activeSection === item ? "active" : ""}`}

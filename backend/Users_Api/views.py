@@ -9,7 +9,7 @@ from .serializers import (
     UserSettingsSerializer,
     SetEmailSerializer,
     VerifyEmailCodeSerializer,
-    AutoSaveSettingsSerializer
+    AutoSaveSettingsSerializer,
 )
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
@@ -34,7 +34,7 @@ from .tasks import (
     send_confirmation_email,
     send_change_password_email,
     send_password_reset_email,
-    send_support_request_email
+    send_support_request_email,
 )
 from .models import UserSettings
 from django.utils.html import escape
@@ -81,20 +81,22 @@ class PasswordValidateView(APIView):
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
-
     def post(self, request):
+        refresh_token = request.data.get("refresh")
+        if not refresh_token:
+            return Response(
+                {"detail": "Refresh token required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
-            refresh_token = request.data.get("refresh_token")
             token = RefreshToken(refresh_token)
             token.blacklist()
             log_event(request, request.user, "logout")
-            return Response(
-                {"detail": "Successfully logged out."},
-                status=status.HTTP_205_RESET_CONTENT,
-            )
+            return Response({"detail": "Successfully logged out."}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response(
-                {"detail": "Error logging out."}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Invalid token."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -107,14 +109,14 @@ class ChangePasswordView(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
 
         if serializer.is_valid():
-            
+
             if not user.check_password(serializer.validated_data["current_password"]):
-                
+
                 return Response(
                     {"current_password": ["Wrong password."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            
+
             user.set_password(serializer.validated_data["new_password"])
             user.save()
 
@@ -124,7 +126,7 @@ class ChangePasswordView(APIView):
             return Response(
                 {"detail": "Password successfully changed."}, status=status.HTTP_200_OK
             )
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -269,59 +271,68 @@ class VerifyEmailCodeView(APIView):
         return Response(serializer.errors, status=400)
 
 
-
 class ChangeUsernameView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
 
     def get_object(self):
-        return self.request.user 
+        return self.request.user
 
     def update(self, request, *args, **kwargs):
         if "username" not in request.data:
             return Response(
                 {"detail": "Поле 'username' є обов'язковим."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        serializer = self.get_serializer(
+            self.get_object(), data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
 class AutoSaveSettingsView(APIView):
-    permission_classes=[IsAuthenticated]
-    
-    def get(self,request):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
         try:
-            settings=request.user.usersettings
+            settings = request.user.usersettings
         except UserSettings.DoesNotExist:
-            return Response({"detail": "User settings not found."}, status=status.HTTP_404_NOT_FOUND)
-        serializer=AutoSaveSettingsSerializer(settings)
-        return Response(serializer.data,status=status.HTTP_200_OK)
-    
-    def put(self,request):
+            return Response(
+                {"detail": "User settings not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = AutoSaveSettingsSerializer(settings)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request):
         settings, created = UserSettings.objects.get_or_create(user=request.user)
-        serializer = AutoSaveSettingsSerializer(settings, data=request.data, partial=True)
+        serializer = AutoSaveSettingsSerializer(
+            settings, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
 class SupportRequestView(APIView):
-   def post(self, request):
+    def post(self, request):
         email = (request.data.get("email") or "").strip()
         subject = (request.data.get("subject") or "").strip()
         message = (request.data.get("message") or "").strip()
 
         if not email or not subject or not message:
-            return Response({"detail": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "All fields are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-       
         subject = escape(subject)
         message = escape(message)
 
         send_support_request_email.delay(email, subject, message)
-        return Response({"detail": "Support request sent successfully."}, status=status.HTTP_200_OK)
-        
+        return Response(
+            {"detail": "Support request sent successfully."}, status=status.HTTP_200_OK
+        )

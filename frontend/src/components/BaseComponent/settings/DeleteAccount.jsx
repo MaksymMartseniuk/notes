@@ -1,1 +1,3 @@
-export default function DeleteAccount(){}
+export default function DeleteAccount(){
+    
+}

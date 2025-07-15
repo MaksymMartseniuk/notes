@@ -3,13 +3,14 @@ import api from "../../../api";
 import ChangeEmailModal from "./changeEmailModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import ChangeUsernameModal from "./ChangeUsernameModal";
-
+import LogOutModal from "./LogOutModal";
 export default function AccountSecurity() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [showUsernameModal, setUsernameModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSureLogoutModal, setShowSureLogoutModal] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -51,9 +52,21 @@ export default function AccountSecurity() {
             Change your password to login to your account.
           </p>
         </div>
-        <button onClick={() => setShowPasswordModal(true)}>Change password</button>
+        <button onClick={() => setShowPasswordModal(true)}>
+          Change password
+        </button>
       </div>
 
+      <div className="security-row">
+        <div>
+          <p className="security-label">Logout</p>
+          <p className="security-description">
+            Log out from your account. You will need to log in again to access
+            your account.
+          </p>
+        </div>
+        <button onClick={() => setShowSureLogoutModal(true)}>Logout</button>
+      </div>
       {showUsernameModal && (
         <ChangeUsernameModal
           username={username}
@@ -71,6 +84,10 @@ export default function AccountSecurity() {
 
       {showPasswordModal && (
         <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
+
+      {showSureLogoutModal && (
+        <LogOutModal onClose={() => setShowSureLogoutModal(false)} />
       )}
     </div>
   );

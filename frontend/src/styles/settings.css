@@ -311,3 +311,34 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
+.logout-modal{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1001;
+  transform: translate(-50%, -50%);
+  background-color: #1e1e1e;
+  padding: 1.5rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.logout-modal-buttons{
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.logout-modal button {
+  padding: 0.5rem;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  gap: 5px;
+}
