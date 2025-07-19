@@ -2,7 +2,7 @@ from django.urls import path, include
 from .views import (CreateUserView ,ProfileUserView,LogoutView, ChangePasswordView,
                     PasswordResetView,PasswordResetConfirmView, CustomTokenObtainPairView,
                     CustomTokenRefreshView,EmailVerificationView,UserSettingsView,
-                    PasswordValidateView,SetEmailView,VerifyEmailCodeView,ChangeUsernameView,AutoSaveSettingsView,SupportRequestView)
+                    PasswordValidateView,SetEmailView,VerifyEmailCodeView,ChangeUsernameView,AutoSaveSettingsView,SupportRequestView,DeleteAccountView)
 
 urlpatterns = [
     path('user/register/', CreateUserView.as_view(), name='register'),
@@ -21,5 +21,6 @@ urlpatterns = [
     path('user/change_username/',ChangeUsernameView.as_view(),name='change_username'),
     path('settings/autosave/',AutoSaveSettingsView.as_view(),name='autosave_settings'),
     path("support/", SupportRequestView.as_view(), name="support_request"),
+    path('users/delete_account/', DeleteAccountView.as_view(), name='delete_account'),
     path('api-auth',include('rest_framework.urls', namespace='rest_framework'))
 ]

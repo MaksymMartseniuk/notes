@@ -39,6 +39,7 @@ class AuthLog(models.Model):
         ("password_change", "Password Change"),
         ("password_reset", "Password Reset"),
         ("logout", "Logout"),
+        ('account_deletion', 'Account Deletion'),
         ]
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     event_type = models.CharField(max_length=50,choices=EVENT_CHOICES)

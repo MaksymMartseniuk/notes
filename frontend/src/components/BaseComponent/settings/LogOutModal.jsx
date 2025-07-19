@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
 import api from "../../../api";
 import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN } from "../../../constants";
 export default function LogOutModal({ onClose }) {
+  const navigate = useNavigate();
   const handleLogout = async () => {
     const refreshToken = localStorage.getItem("refresh");
     try {
@@ -17,7 +17,7 @@ export default function LogOutModal({ onClose }) {
       );
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
-      window.location.href = "/login";
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }

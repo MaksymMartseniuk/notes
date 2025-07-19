@@ -1,5 +1,3 @@
-
-import DeleteAccount from "./DeleteAccount";
 import AccountSecurity from './AccountSecurity'
 
 export default function SettingsProfile() {
@@ -7,7 +5,6 @@ export default function SettingsProfile() {
     <div className="settings">
       <h3>User profile</h3>
       <AccountSecurity/>
-      <DeleteAccount />
     </div>
   );
 }

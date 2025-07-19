@@ -336,3 +336,22 @@ class SupportRequestView(APIView):
         return Response(
             {"detail": "Support request sent successfully."}, status=status.HTTP_200_OK
         )
+        
+
+class DeleteAccountView(APIView):
+    permission_classes =[IsAuthenticated]
+    
+    def post(self, request):
+        password = request.data.get("password")
+        if not password:
+            return Response({"detail": "Password is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = request.user
+        if not user.check_password(password):
+            return Response({"detail": "Incorrect password."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        log_event(request, user, "account_deletion")
+        user.delete()
+        
+        return Response({"detail": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+    

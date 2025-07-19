@@ -4,6 +4,7 @@ import ChangeEmailModal from "./changeEmailModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 import ChangeUsernameModal from "./ChangeUsernameModal";
 import LogOutModal from "./LogOutModal";
+import DeleteAccountModal from "./DeleteAccountModal";
 export default function AccountSecurity() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -11,7 +12,7 @@ export default function AccountSecurity() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showSureLogoutModal, setShowSureLogoutModal] = useState(false);
-
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -67,6 +68,17 @@ export default function AccountSecurity() {
         </div>
         <button onClick={() => setShowSureLogoutModal(true)}>Logout</button>
       </div>
+
+      <div className="security-row">
+        <div>
+          <p className="security-label">Delete Account</p>
+          <p className="security-description">
+            Permanently delete your account. This action cannot be undone.
+          </p>
+        </div>
+        <button onClick={()=>{setShowDeleteAccountModal(true)}}>Delete Account</button>
+      </div>
+
       {showUsernameModal && (
         <ChangeUsernameModal
           username={username}
@@ -88,6 +100,10 @@ export default function AccountSecurity() {
 
       {showSureLogoutModal && (
         <LogOutModal onClose={() => setShowSureLogoutModal(false)} />
+      )}
+
+      {showDeleteAccountModal && (
+        <DeleteAccountModal onClose={() => setShowDeleteAccountModal(false)} />
       )}
     </div>
   );
