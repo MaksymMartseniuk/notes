@@ -63,7 +63,8 @@ const fetchNotes = () => {
   api
     .get("/notes-api/notes/")
     .then((res) => {
-      const updatedNotes = res.data.map((note) => {
+        console.log("Отримані нотатки:", res.data);
+        const updatedNotes = res.data.map((note) => {
         const bufferKey = `note-draft-${note.uuid}`;
         const draft = localStorage.getItem(bufferKey);
         if (draft) {
@@ -79,6 +80,7 @@ const fetchNotes = () => {
             console.error("Помилка парсингу чернетки:", e);
           }
         }
+        
         return note;
       });
 
@@ -314,14 +316,14 @@ useEffect(() => {
                   ? note.title.slice(0, 15) + "…"
                   : note.title}
                 <div className="icons-wrapper">
-                  {/* 
+
+                  { 
                   <FontAwesomeIcon
-                  className="button-icon"
+                  className="button-icon note-sidebar-icon"
                     icon={faArrowDown}
-                    className="note-sidebar-icon"
                     onClick={(e) => e.stopPropagation()}
                   /> 
-                  */}
+                  }
 
                   {!openContentMenu && (
                     <FontAwesomeIcon

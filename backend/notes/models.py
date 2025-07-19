@@ -3,6 +3,7 @@ from Users_Api.models import CustomUser
 from django.utils.text import slugify
 from unidecode import unidecode
 import uuid
+from django.core.exceptions import ValidationError
 # Create your models here.
 
 class Note(models.Model):
@@ -15,9 +16,20 @@ class Note(models.Model):
     is_favorite = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     tag=models.ManyToManyField('Tag', blank=True, related_name='notes')
+    
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='sub_notes')
+
+    
     def __str__(self):
         return self.title
     
+    def clean(self):
+        if self.parents_note and self.parents_note.parents_note:
+            raise ValidationError("A note cannot have more than one parent note.")
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['-created_at']
