@@ -6,6 +6,7 @@ import {
   faEllipsis,
   faPlus,
   faArrowDown,
+  faArrowRight,
   faClockRotateLeft,
   faStar as faStarSolid,
 } from "@fortawesome/free-solid-svg-icons";
@@ -57,42 +58,42 @@ export default function Base() {
   });
 
   const saveHandleRef = useRef(() => Promise.resolve());
+  const [expandedNotes, setExpandedNotes] = useState({});
   const navigate = useNavigate();
 
-const fetchNotes = () => {
-  api
-    .get("/notes-api/notes/")
-    .then((res) => {
+  const fetchNotes = () => {
+    api
+      .get("/notes-api/notes/")
+      .then((res) => {
         console.log("Отримані нотатки:", res.data);
         const updatedNotes = res.data.map((note) => {
-        const bufferKey = `note-draft-${note.uuid}`;
-        const draft = localStorage.getItem(bufferKey);
-        if (draft) {
-          try {
-            const parsedDraft = JSON.parse(draft);
-            if (parsedDraft.title && parsedDraft.title !== note.title) {
-              return {
-                ...note,
-                title: parsedDraft.title,
-              };
+          const bufferKey = `note-draft-${note.uuid}`;
+          const draft = localStorage.getItem(bufferKey);
+          if (draft) {
+            try {
+              const parsedDraft = JSON.parse(draft);
+              if (parsedDraft.title && parsedDraft.title !== note.title) {
+                return {
+                  ...note,
+                  title: parsedDraft.title,
+                };
+              }
+            } catch (e) {
+              console.error("Помилка парсингу чернетки:", e);
             }
-          } catch (e) {
-            console.error("Помилка парсингу чернетки:", e);
           }
-        }
-        
-        return note;
-      });
 
-      setNotes(updatedNotes);
-    })
-    .catch((err) => console.error("Помилка отримання нотаток:", err));
-};
+          return note;
+        });
 
-useEffect(() => {
-  fetchNotes();
-}, []);
+        setNotes(updatedNotes);
+      })
+      .catch((err) => console.error("Помилка отримання нотаток:", err));
+  };
 
+  useEffect(() => {
+    fetchNotes();
+  }, []);
 
   const fetchDeletedNotes = () => {
     api
@@ -130,7 +131,7 @@ useEffect(() => {
       (note) => note.uuid === uuidFromPath
     );
     if (foundInNotes) {
-      const bufferKey= `note-draft-${foundInNotes.uuid}`;
+      const bufferKey = `note-draft-${foundInNotes.uuid}`;
       const buffer = localStorage.getItem(bufferKey);
       const bufferedData = buffer ? JSON.parse(buffer) : null;
       const title = bufferedData?.title || foundInNotes.title;
@@ -280,6 +281,14 @@ useEffect(() => {
     }
   };
 
+
+  const toggleChildren= (id,e)=>{
+    e.stopPropagation();
+    setExpandedNotes((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  }
   if (loading) return;
   if (!user) return;
 
@@ -315,15 +324,17 @@ useEffect(() => {
                 {note.title.length > 15
                   ? note.title.slice(0, 15) + "…"
                   : note.title}
+
                 <div className="icons-wrapper">
 
-                  { 
-                  <FontAwesomeIcon
-                  className="button-icon note-sidebar-icon"
-                    icon={faArrowDown}
-                    onClick={(e) => e.stopPropagation()}
-                  /> 
-                  }
+
+                  {note.children.length > 0 && (
+                    <FontAwesomeIcon
+                      className="button-icon note-sidebar-icon"
+                      icon={expandedNotes[note.id] ? faArrowDown : faArrowRight}
+                      onClick={e=>{toggleChildren(note.uuid,e)}}
+                    />
+                  )}
 
                   {!openContentMenu && (
                     <FontAwesomeIcon
@@ -342,7 +353,30 @@ useEffect(() => {
                       onClick={(e) => e.stopPropagation()}
                     />
                   )}
+
                 </div>
+                {expandedNotes[note.id] && note.children.length > 0 && (
+                  <ul>
+                    {note.children.map((child) => (
+                      <li
+                        key={child.uuid}
+                        onClick={() => navigate(`/notes/${child.uuid}`)}
+                      >
+                        {child.title.length > 15
+                          ? child.title.slice(0, 15) + "…"
+                          : child.title}
+                        <FontAwesomeIcon
+                          icon={faEllipsis}
+                          className="note-sidebar-icon button-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleContentMenuClick(e, child.uuid);
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
@@ -403,7 +437,15 @@ useEffect(() => {
         )}
 
         <main className="main-notes-container">
-          <Outlet context={{ fetchNotes, registerSaveHandle,notes,setNotes,selectedNoteUuid, }} />
+          <Outlet
+            context={{
+              fetchNotes,
+              registerSaveHandle,
+              notes,
+              setNotes,
+              selectedNoteUuid,
+            }}
+          />
         </main>
       </div>
 
@@ -446,5 +488,7 @@ useEffect(() => {
         />
       )}
     </div>
+
+
   );
 }

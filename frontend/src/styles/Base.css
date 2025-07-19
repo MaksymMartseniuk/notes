@@ -129,7 +129,9 @@
   text-decoration: none;
   color: inherit;
 }
-
+.notes-sidebar-menu ul ul {
+  padding-left: 1rem;
+}
 .notes-sidebar-menu .bottom-list {
   margin-top: auto;
 }
