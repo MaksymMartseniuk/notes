@@ -323,7 +323,7 @@ export default function Base() {
         </div>
 
         <div className="notes-sidebar-menu">
-          <ul>
+          <ul className="top-list">
             <li>Search</li>
             <li>
               <Link to="/notes">Home</Link>
@@ -331,45 +331,52 @@ export default function Base() {
           </ul>
 
           <h1>Private</h1>
-          <ul>
+          <ul className="notes-sidebar-menu">
             {notes.map((note) => (
               <li key={note.id} onClick={() => navigate(`/notes/${note.uuid}`)}>
-                {note.title.length > 15
-                  ? note.title.slice(0, 15) + "…"
-                  : note.title}
+                <div className="note-sidebar-item">
+                  <span className="note-sidebar-item-title">
+                    {note.title.length > 15
+                      ? note.title.slice(0, 15) + "…"
+                      : note.title}
+                  </span>
 
-                <div className="icons-wrapper">
-                  {Array.isArray(note.children) && note.children.length > 0 && (
-                    <FontAwesomeIcon
-                      className="button-icon note-sidebar-icon"
-                      icon={expandedNotes[note.id] ? faArrowDown : faArrowRight}
-                      onClick={(e) => {
-                        toggleChildren(note.id, e);
-                      }}
-                    />
-                  )}
+                  <div className="icons-wrapper">
+                    {Array.isArray(note.children) &&
+                      note.children.length > 0 && (
+                        <FontAwesomeIcon
+                          className="button-icon note-sidebar-icon"
+                          icon={
+                            expandedNotes[note.id] ? faArrowDown : faArrowRight
+                          }
+                          onClick={(e) => toggleChildren(note.id, e)}
+                        />
+                      )}
 
-                  {!openContentMenu && (
-                    <FontAwesomeIcon
-                      icon={faEllipsis}
-                      className="note-sidebar-icon button-icon"
-                      onClick={(e) => {
-                        setOpenContentMenu(true);
-                        handleContentMenuClick(e, note.uuid);
-                      }}
-                    />
-                  )}
-                  {!openContentMenu && (
-                    <FontAwesomeIcon
-                      icon={faPlus}
-                      className="note-sidebar-icon button-icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCreateSubNote(note.id);
-                      }}
-                    />
-                  )}
+                    {!openContentMenu && (
+                      <FontAwesomeIcon
+                        icon={faEllipsis}
+                        className="note-sidebar-icon button-icon"
+                        onClick={(e) => {
+                          setOpenContentMenu(true);
+                          handleContentMenuClick(e, note.uuid);
+                        }}
+                      />
+                    )}
+
+                    {!openContentMenu && (
+                      <FontAwesomeIcon
+                        icon={faPlus}
+                        className="note-sidebar-icon button-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCreateSubNote(note.id);
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
+
                 {expandedNotes[note.id] && note.children.length > 0 && (
                   <ul>
                     {note.children.map((child) => (
@@ -377,17 +384,23 @@ export default function Base() {
                         key={child.uuid}
                         onClick={() => navigate(`/notes/${child.uuid}`)}
                       >
-                        {child.title.length > 15
-                          ? child.title.slice(0, 15) + "…"
-                          : child.title}
-                        <FontAwesomeIcon
-                          icon={faEllipsis}
-                          className="note-sidebar-icon button-icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleContentMenuClick(e, child.uuid);
-                          }}
-                        />
+                        <div className="note-sidebar-item">
+                          <span className="note-sidebar-item-title">
+                            {child.title.length > 15
+                              ? child.title.slice(0, 15) + "…"
+                              : child.title}
+                          </span>
+                          <div className="icons-wrapper">
+                            <FontAwesomeIcon
+                              icon={faEllipsis}
+                              className="note-sidebar-icon button-icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleContentMenuClick(e, child.uuid);
+                              }}
+                            />
+                          </div>
+                        </div>
                       </li>
                     ))}
                   </ul>

@@ -86,14 +86,28 @@
 .notes-sidebar-menu {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: 1rem;
   height: 100%;
   font-family: "Segoe UI", sans-serif;
   font-size: 0.95rem;
   color: white;
 }
-
+.top-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  gap: 0.5rem;
+}
+.top-list li {
+  display: flex;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-sizing: border-box;
+}
 .notes-sidebar-menu h1 {
   font-size: 0.75rem;
   margin-top: 1.5rem;
@@ -111,14 +125,10 @@
 
 .notes-sidebar-menu li {
   display: flex;
+  flex-direction: column;
   width: 100%;
-  padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  color: #ddd;
-  cursor: pointer;
   transition: background-color 0.2s;
-  box-sizing: border-box;
-  align-items: center;
 }
 
 .notes-sidebar-menu li:hover {
@@ -129,13 +139,15 @@
   text-decoration: none;
   color: inherit;
 }
+
 .notes-sidebar-menu ul ul {
   list-style: none;
   padding-left: 1rem;
   margin: 0;
 }
+
 .notes-sidebar-menu ul ul li {
- display: flex;
+  display: flex;
   padding: 0.25rem 0.5rem;
   font-size: 0.9rem;
   color: #ddd;
@@ -144,8 +156,26 @@
   box-sizing: border-box;
   align-items: center;
 }
+
 .notes-sidebar-menu .bottom-list {
   margin-top: auto;
+}
+
+.note-sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  color: #ffffff;
+  flex-direction: row;
+}
+
+.note-sidebar-item-title {
+  flex-shrink: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
 
 .icons-wrapper {
@@ -153,7 +183,15 @@
   display: flex;
   gap: 0.9rem;
   align-items: center;
+  justify-content: center;
 }
+
+.note-sidebar-icon:hover {
+  background-color: rgb(70, 70, 70);
+  padding: 2px;
+  border-radius: 2px;
+}
+
 .note-sidebar-icon:hover {
   background-color: rgb(70, 70, 70);
   padding: 2px;
