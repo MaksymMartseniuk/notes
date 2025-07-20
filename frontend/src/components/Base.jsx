@@ -333,8 +333,8 @@ export default function Base() {
           <h1>Private</h1>
           <ul className="notes-sidebar-menu">
             {notes.map((note) => (
-              <li key={note.id} onClick={() => navigate(`/notes/${note.uuid}`)}>
-                <div className="note-sidebar-item">
+              <li key={note.id}>
+                <div className="note-sidebar-item" onClick={() => navigate(`/notes/${note.uuid}`)}>
                   <span className="note-sidebar-item-title">
                     {note.title.length > 15
                       ? note.title.slice(0, 15) + "…"
@@ -382,9 +382,9 @@ export default function Base() {
                     {note.children.map((child) => (
                       <li
                         key={child.uuid}
-                        onClick={() => navigate(`/notes/${child.uuid}`)}
+                       
                       >
-                        <div className="note-sidebar-item">
+                        <div className="note-sidebar-item" onClick={() => navigate(`/notes/${child.uuid}`)}>
                           <span className="note-sidebar-item-title">
                             {child.title.length > 15
                               ? child.title.slice(0, 15) + "…"

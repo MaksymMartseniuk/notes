@@ -168,6 +168,7 @@
   cursor: pointer;
   color: #ffffff;
   flex-direction: row;
+  gap: 10px;
 }
 
 .note-sidebar-item-title {
