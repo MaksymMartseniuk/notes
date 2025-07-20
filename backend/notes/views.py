@@ -21,7 +21,7 @@ class NoteListView(APIView):
 
     def get(self, request):
         user = request.user
-        cache_key = f"user_notes_tree:{user.id}"
+        cache_key = f"user_notes:{user.id}"
         notes_tree = cache.get(cache_key)
 
         if notes_tree is None:
