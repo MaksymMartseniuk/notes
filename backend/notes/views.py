@@ -13,7 +13,7 @@ from .tasks import save_note_from_cache, save_note_version
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from Users_Api.models import UserSettings
-
+from .cache import _get_notes_tree, _update_notes_cache
 
 # Create your views here.
 class NoteListView(APIView):
@@ -25,70 +25,10 @@ class NoteListView(APIView):
         notes_tree = cache.get(cache_key)
 
         if notes_tree is None:
-            notes_tree = self._get_notes_tree(user)
+            notes_tree = _get_notes_tree(user)
             cache.set(cache_key, notes_tree, timeout=600)
 
         return Response(notes_tree, status=status.HTTP_200_OK)
-
-    def _get_notes_with_cache(self, user):
-        notes_queryset = Note.objects.filter(author=user, is_deleted=False)
-        notes = []
-        for note in notes_queryset:
-            buffer_key = f"note_buffer:{note.id}"
-            buffered_data = cache.get(buffer_key)
-            if buffered_data:
-                notes.append(
-                    {
-                        "id": note.id,
-                        "uuid": str(note.uuid),
-                        "title": buffered_data.get("title", note.title),
-                        "content": buffered_data.get("content", note.content),
-                        "updated_at": note.updated_at.isoformat(),
-                        "created_at": note.created_at.isoformat(),
-                    }
-                )
-            else:
-                notes.append(NoteSerializer(note).data)
-        return sorted(notes, key=lambda x: x["updated_at"], reverse=True)
-
-    def _get_notes_tree(self, user):
-        all_notes = Note.objects.filter(author=user, is_deleted=False)
-        notes_map = {}
-        tree = []
-
-        for note in all_notes:
-            buffer_key = f"note_buffer:{note.id}"
-            buffered_data = cache.get(buffer_key)
-
-            note_data = {
-                "id": note.id,
-                "uuid": str(note.uuid),
-                "title": (
-                    buffered_data.get("title", note.title)
-                    if buffered_data
-                    else note.title
-                ),
-                "content": (
-                    buffered_data.get("content", note.content)
-                    if buffered_data
-                    else note.content
-                ),
-                "updated_at": note.updated_at.isoformat(),
-                "created_at": note.created_at.isoformat(),
-                "children": [],
-            }
-            notes_map[note.id] = note_data
-
-        for note in all_notes:
-            if note.parent_id:
-                parent = notes_map.get(note.parent_id)
-                if parent:
-                    parent["children"].append(notes_map[note.id])
-            else:
-                tree.append(notes_map[note.id])
-
-        return tree
-
 
 class NoteGetOrCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -150,7 +90,7 @@ class NoteGetOrCreateView(APIView):
             cache.delete(cache_key)
             cache.delete(task_id_key)
             cache.delete(version_task_id_key)
-            self._update_notes_cache(request.user)
+            _update_notes_cache(request.user)
             return Response(
                 {"detail": "Дані збережено негайно."}, status=status.HTTP_200_OK
             )
@@ -181,7 +121,7 @@ class NoteGetOrCreateView(APIView):
         cache.set(task_id_key, task.id, timeout=delay_seconds + 60)
         cache.set(version_task_id_key, task_version.id, timeout=delay_seconds + 60)
 
-        self._update_notes_cache(request.user)
+        _update_notes_cache(request.user)
 
         return Response(
             {
@@ -205,50 +145,11 @@ class NoteGetOrCreateView(APIView):
         serializer.save()
 
         cache.set(cache_key, data_to_save, timeout=600)
-        self._update_notes_cache(request.user)
+        _update_notes_cache(request.user)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def _update_notes_cache(self, user):
-        all_notes = Note.objects.filter(author=user, is_deleted=False)
-        notes_map = {}
-        tree = []
-
-        for note in all_notes:
-            buffer_key = f"note_buffer:{note.id}"
-            buffered_data = cache.get(buffer_key)
-
-            note_data = {
-                "id": note.id,
-                "uuid": str(note.uuid),
-                "title": (
-                    buffered_data.get("title", note.title)
-                    if buffered_data
-                    else note.title
-                ),
-                "content": (
-                    buffered_data.get("content", note.content)
-                    if buffered_data
-                    else note.content
-                ),
-                "updated_at": note.updated_at.isoformat(),
-                "created_at": note.created_at.isoformat(),
-                "children": [],
-            }
-            notes_map[note.id] = note_data
-
-        for note in all_notes:
-            if note.parent_id:
-                parent = notes_map.get(note.parent_id)
-                if parent:
-                    parent["children"].append(notes_map[note.id])
-            else:
-                tree.append(notes_map[note.id])
-
-        # кешування дерева нотаток
-        cache.set(f"user_notes:{user.id}", tree, timeout=600)
-
-
+    
 class DeleteNoteListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -273,49 +174,9 @@ class NoteRestoreView(APIView):
         cache_key = f"note_buffer:{note.id}"
         cache.delete(cache_key)
 
-        self._update_notes_cache(request.user)
+        _update_notes_cache(request.user)
 
         return Response(NoteSerializer(note).data, status=200)
-
-    def _update_notes_cache(self, user):
-        all_notes = Note.objects.filter(author=user, is_deleted=False)
-        notes_map = {}
-        tree = []
-
-        for note in all_notes:
-            buffer_key = f"note_buffer:{note.id}"
-            buffered_data = cache.get(buffer_key)
-
-            note_data = {
-                "id": note.id,
-                "uuid": str(note.uuid),
-                "title": (
-                    buffered_data.get("title", note.title)
-                    if buffered_data
-                    else note.title
-                ),
-                "content": (
-                    buffered_data.get("content", note.content)
-                    if buffered_data
-                    else note.content
-                ),
-                "updated_at": note.updated_at.isoformat(),
-                "created_at": note.created_at.isoformat(),
-                "children": [],
-            }
-            notes_map[note.id] = note_data
-
-        for note in all_notes:
-            if note.parent_id:
-                parent = notes_map.get(note.parent_id)
-                if parent:
-                    parent["children"].append(notes_map[note.id])
-            else:
-                tree.append(notes_map[note.id])
-
-        # кешування дерева нотаток
-        cache.set(f"user_notes:{user.id}", tree, timeout=600)
-
 
 class NoteVersionListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -325,7 +186,6 @@ class NoteVersionListView(APIView):
         versions = note.versions.all()
         serializer = NoteVersionSerializer(versions, many=True)
         return Response(serializer.data)
-
 
 class NoteVersionView(APIView):
     permission_classes = [IsAuthenticated]
