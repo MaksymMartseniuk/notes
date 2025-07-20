@@ -24,7 +24,7 @@ class Note(models.Model):
         return self.title
     
     def clean(self):
-        if self.parents_note and self.parents_note.parents_note:
+        if self.parent and self.parent.parent:
             raise ValidationError("A note cannot have more than one parent note.")
     
     def save(self, *args, **kwargs):

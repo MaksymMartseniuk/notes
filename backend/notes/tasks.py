@@ -27,26 +27,35 @@ def save_note_from_cache(note_id, data):
 
 
 def update_user_notes_cache(user):
-    notes_queryset = Note.objects.filter(author=user, is_deleted=False)
-    notes = []
+    all_notes = Note.objects.filter(author=user, is_deleted=False).select_related("parent")
+    notes_map = {}
+    tree = []
 
-    for note_obj in notes_queryset:
-        buffer_key = f"note_buffer:{note_obj.id}"
+    for note in all_notes:
+        buffer_key = f"note_buffer:{note.id}"
         buffered_data = cache.get(buffer_key)
-        if buffered_data:
-            notes.append({
-                'id': note_obj.id,
-                'uuid': str(note_obj.uuid),
-                'title': buffered_data.get('title', note_obj.title),
-                'content': buffered_data.get('content', note_obj.content),
-                'updated_at': note_obj.updated_at.isoformat(),
-                'created_at': note_obj.created_at.isoformat(),
-            })
-        else:
-            notes.append(NoteSerializer(note_obj).data)
 
-    notes.sort(key=lambda x: x['updated_at'], reverse=True)
-    cache.set(f"user_notes:{user.id}", notes, timeout=600)
+        note_data = {
+            "id": note.id,
+            "uuid": str(note.uuid),
+            "title": buffered_data.get("title", note.title) if buffered_data else note.title,
+            "content": buffered_data.get("content", note.content) if buffered_data else note.content,
+            "updated_at": note.updated_at.isoformat(),
+            "created_at": note.created_at.isoformat(),
+            "children": [],
+        }
+        notes_map[note.id] = note_data
+
+    for note in all_notes:
+        if note.parent_id:
+            parent = notes_map.get(note.parent_id)
+            if parent:
+                parent["children"].append(notes_map[note.id])
+        else:
+            tree.append(notes_map[note.id])
+
+    cache.set(f"user_notes:{user.id}", tree, timeout=600)
+
 
 
 @shared_task(max_retries=3, default_retry_delay=10)

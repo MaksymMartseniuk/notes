@@ -220,7 +220,21 @@ export default function Base() {
       })
       .catch((err) => console.error("Помилка створення нотатки:", err));
   };
-
+  const handleCreateSubNote = (parentId) => {
+    const newNoteId = uuidv4();
+    api
+      .post(
+        `/notes-api/notes/${newNoteId}/`,
+        { title: "Нова піднотатка", content: "", parent: parentId },
+        { headers: { Authorization: `Bearer ${ACCESS_TOKEN}` } }
+      )
+      .then((res) => {
+        const createdNote = res.data;
+        setNotes((prev) => [createdNote, ...prev]);
+        navigate(`/notes/${createdNote.uuid}`);
+      })
+      .catch((err) => console.error("Помилка створення піднотатки:", err));
+  };
   const handleContentMenuClick = (e, uuid) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
@@ -281,14 +295,13 @@ export default function Base() {
     }
   };
 
-
-  const toggleChildren= (id,e)=>{
+  const toggleChildren = (id, e) => {
     e.stopPropagation();
     setExpandedNotes((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
-  }
+  };
   if (loading) return;
   if (!user) return;
 
@@ -326,13 +339,13 @@ export default function Base() {
                   : note.title}
 
                 <div className="icons-wrapper">
-
-
-                  {note.children.length > 0 && (
+                  {Array.isArray(note.children) && note.children.length > 0 && (
                     <FontAwesomeIcon
                       className="button-icon note-sidebar-icon"
                       icon={expandedNotes[note.id] ? faArrowDown : faArrowRight}
-                      onClick={e=>{toggleChildren(note.uuid,e)}}
+                      onClick={(e) => {
+                        toggleChildren(note.id, e);
+                      }}
                     />
                   )}
 
@@ -350,10 +363,12 @@ export default function Base() {
                     <FontAwesomeIcon
                       icon={faPlus}
                       className="note-sidebar-icon button-icon"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCreateSubNote(note.id);
+                      }}
                     />
                   )}
-
                 </div>
                 {expandedNotes[note.id] && note.children.length > 0 && (
                   <ul>
@@ -488,7 +503,5 @@ export default function Base() {
         />
       )}
     </div>
-
-
   );
 }

@@ -130,11 +130,24 @@
   color: inherit;
 }
 .notes-sidebar-menu ul ul {
+  list-style: none;
   padding-left: 1rem;
+  margin: 0;
+}
+.notes-sidebar-menu ul ul li {
+ display: flex;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-sizing: border-box;
+  align-items: center;
 }
 .notes-sidebar-menu .bottom-list {
   margin-top: auto;
 }
+
 .icons-wrapper {
   margin-left: auto;
   display: flex;

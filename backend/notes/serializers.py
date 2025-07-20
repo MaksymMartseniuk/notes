@@ -7,6 +7,11 @@ class NoteSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         required=False
     )
+    parent =serializers.PrimaryKeyRelatedField(
+        queryset=Note.objects.all(),
+        required=False,
+        allow_null=True
+    )
     class Meta:
         model = Note
         fields = '__all__'
@@ -26,7 +31,8 @@ class NoteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop("tag", [])
-        note = Note.objects.create(**validated_data)
+        user = self.context['request'].user
+        note = Note.objects.create(auther=user,**validated_data)
         if tags:
             note.tag.set(tags)
         return note
