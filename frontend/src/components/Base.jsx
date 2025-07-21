@@ -61,30 +61,36 @@ export default function Base() {
   const [expandedNotes, setExpandedNotes] = useState({});
   const navigate = useNavigate();
 
+  const updatedNoteWithDraft = (note) => {
+    const bufferKey = `note-draft-${note.uuid}`;
+    const draft = localStorage.getItem(bufferKey);
+    let updatedNote = note;
+    if (draft) {
+      try {
+        const parsedDraft = JSON.parse(draft);
+        if (parsedDraft.title && parsedDraft.title !== note.title) {
+          updatedNote = { ...updatedNote, title: parsedDraft.title };
+        }
+      } catch (e) {
+        console.error("Помилка парсингу чернетки:", e);
+      }
+
+      if (Array.isArray(note.children) && note.children.length > 0) {
+        updatedNote = {
+          ...updatedNote,
+          children: note.children.map(updatedNoteWithDraft),
+        };
+      }
+    }
+    return updatedNote;
+  };
+
   const fetchNotes = () => {
     api
       .get("/notes-api/notes/")
       .then((res) => {
         console.log("Отримані нотатки:", res.data);
-        const updatedNotes = res.data.map((note) => {
-          const bufferKey = `note-draft-${note.uuid}`;
-          const draft = localStorage.getItem(bufferKey);
-          if (draft) {
-            try {
-              const parsedDraft = JSON.parse(draft);
-              if (parsedDraft.title && parsedDraft.title !== note.title) {
-                return {
-                  ...note,
-                  title: parsedDraft.title,
-                };
-              }
-            } catch (e) {
-              console.error("Помилка парсингу чернетки:", e);
-            }
-          }
-
-          return note;
-        });
+        const updatedNotes = res.data.map(updatedNoteWithDraft);
 
         setNotes(updatedNotes);
       })
@@ -334,7 +340,10 @@ export default function Base() {
           <ul className="notes-sidebar-menu">
             {notes.map((note) => (
               <li key={note.id}>
-                <div className="note-sidebar-item" onClick={() => navigate(`/notes/${note.uuid}`)}>
+                <div
+                  className="note-sidebar-item"
+                  onClick={() => navigate(`/notes/${note.uuid}`)}
+                >
                   <span className="note-sidebar-item-title">
                     {note.title.length > 15
                       ? note.title.slice(0, 15) + "…"
@@ -380,11 +389,11 @@ export default function Base() {
                 {expandedNotes[note.id] && note.children.length > 0 && (
                   <ul>
                     {note.children.map((child) => (
-                      <li
-                        key={child.uuid}
-                       
-                      >
-                        <div className="note-sidebar-item" onClick={() => navigate(`/notes/${child.uuid}`)}>
+                      <li key={child.uuid}>
+                        <div
+                          className="note-sidebar-item"
+                          onClick={() => navigate(`/notes/${child.uuid}`)}
+                        >
                           <span className="note-sidebar-item-title">
                             {child.title.length > 15
                               ? child.title.slice(0, 15) + "…"
@@ -409,7 +418,7 @@ export default function Base() {
             ))}
           </ul>
 
-          <ul className="bottom-list">
+          <ul className="bottom-list top-list">
             <li
               onClick={(e) => {
                 setOpenSettingsMenu(true);

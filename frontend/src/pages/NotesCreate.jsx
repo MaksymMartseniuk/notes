@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { useCallback } from "react";
 import { useParams, useOutletContext, useLocation } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -107,6 +107,10 @@ export default function NotesCreate() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    document.title = note.title || "Нова нотатка";
+  }, [note.title]);
+
   const insertCommand = (type) => {
     if (!editor) return;
     const { state, commands } = editor;
@@ -171,6 +175,22 @@ export default function NotesCreate() {
     return () => registerSaveHandle(() => Promise.resolve());
   }, [registerSaveHandle, saveHandle]);
 
+  const updateNoteTitleRecursively=(netes,uuid,newTitle)=>{
+    return notes.map((note) => {
+    if (note.uuid === uuid) {
+      return { ...note, title: newTitle };
+    }
+    if (note.children?.length) {
+      return {
+        ...note,
+        children: updateNoteTitleRecursively(note.children, uuid, newTitle),
+      };
+    }
+    return note;
+  });
+  }
+
+
   const handleTitleChange = (e) => {
     const newTitle = e.target.value;
 
@@ -180,11 +200,26 @@ export default function NotesCreate() {
     }));
 
     setNotes((prevNotes) =>
-      prevNotes.map((n) =>
-        n.uuid === selectedNoteUuid ? { ...n, title: newTitle } : n
-      )
+      prevNotes.map((n) => {
+        if (n.uuid === selectedNoteUuid) {
+          return { ...n, title: newTitle };
+        }
+        if (Array.isArray(n.children)) {
+          const updatedChildren = n.children.map((child) =>
+            child.uuid === selectedNoteUuid
+              ? { ...child, title: newTitle }
+              : child
+          );
+
+          return { ...n, children: updatedChildren };
+        }
+
+        return n;
+      })
     );
   };
+
+  
 
   return (
     <div
