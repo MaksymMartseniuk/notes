@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPen,
@@ -89,7 +89,6 @@ export default function Base() {
     api
       .get("/notes-api/notes/")
       .then((res) => {
-        console.log("Отримані нотатки:", res.data);
         const updatedNotes = res.data.map(updatedNoteWithDraft);
 
         setNotes(updatedNotes);
@@ -308,6 +307,7 @@ export default function Base() {
       [id]: !prev[id],
     }));
   };
+
   if (loading) return;
   if (!user) return;
 

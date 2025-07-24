@@ -1,8 +1,13 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note, Tag, NoteVersion
-from .serializers import NoteSerializer, TagSerializer, NoteVersionSerializer
+from .models import Note, Tag, NoteVersion, RecentlyViewedNote
+from .serializers import (
+    NoteSerializer,
+    TagSerializer,
+    NoteVersionSerializer,
+    RecentlyViewedNoteSerializer,
+)
 from django.utils.text import slugify
 from unidecode import unidecode
 from rest_framework.views import APIView
@@ -14,6 +19,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from Users_Api.models import UserSettings
 from .cache import _get_notes_tree, _update_notes_cache
+from django.utils.timezone import now
 
 # Create your views here.
 class NoteListView(APIView):
@@ -29,6 +35,7 @@ class NoteListView(APIView):
             cache.set(cache_key, notes_tree, timeout=600)
 
         return Response(notes_tree, status=status.HTTP_200_OK)
+
 
 class NoteGetOrCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -149,7 +156,7 @@ class NoteGetOrCreateView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    
+
 class DeleteNoteListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -178,6 +185,7 @@ class NoteRestoreView(APIView):
 
         return Response(NoteSerializer(note).data, status=200)
 
+
 class NoteVersionListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -186,6 +194,7 @@ class NoteVersionListView(APIView):
         versions = note.versions.all()
         serializer = NoteVersionSerializer(versions, many=True)
         return Response(serializer.data)
+
 
 class NoteVersionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -229,3 +238,29 @@ class TagDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         instance.delete()
+
+
+class RecentlyViewedNoteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        notes = RecentlyViewedNote.objects.filter(user=request.user).select_related(
+            "note"
+        )[:10]
+        return Response(
+            RecentlyViewedNoteSerializer(notes, many=True).data,
+            status=status.HTTP_200_OK
+        )
+
+    def post(self, request):
+        note_uuid = request.data.get("note_uuid")
+        if not note_uuid:
+            return Response({"detail": "note_uuid is required"}, status=400)
+        note = Note.objects.filter(uuid=note_uuid).first()
+        if not note:
+            return Response({"detail": "Note not found"}, status=404)
+        RecentlyViewedNote.objects.update_or_create(
+            user=request.user, note=note, defaults={"viewed_at": now()}
+        )
+        
+        return Response({"detail": "Saved"}, status=status.HTTP_200_OK)

@@ -58,3 +58,12 @@ class Tag(models.Model):
     
     def __str__(self):
         return self.name
+
+
+class RecentlyViewedNote(models.Model):
+    user=models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name="recent_notes")
+    note=models.ForeignKey(Note,on_delete=models.CASCADE)
+    viewed_at=models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together = ("user", "note")
+        ordering = ["-viewed_at"]

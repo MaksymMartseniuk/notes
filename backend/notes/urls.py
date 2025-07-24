@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import NoteListView, NoteGetOrCreateView, TagCreateView, TagDetailView, NoteVersionListView,DeleteNoteListView, NoteRestoreView, NoteVersionView
+from .views import NoteListView, NoteGetOrCreateView, TagCreateView, TagDetailView, NoteVersionListView,DeleteNoteListView, NoteRestoreView, NoteVersionView,RecentlyViewedNoteView
 
 
 
@@ -12,4 +12,5 @@ urlpatterns = [
     path('notes/<uuid:uuid>/versions/<int:version_id>/', NoteVersionView.as_view(), name='note-version-detail'),
     path('tags/', TagCreateView.as_view(), name='tag-list-create'),
     path('tags/<slug:slug>/', TagDetailView.as_view(), name='tag-detail'),
+    path("recently-viewed/",RecentlyViewedNoteView.as_view(),name='recently-viewed'),
 ]

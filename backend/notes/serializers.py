@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note, Tag, NoteVersion
+from .models import Note, Tag, NoteVersion,RecentlyViewedNote
 
 class NoteSerializer(serializers.ModelSerializer):
     tag = serializers.PrimaryKeyRelatedField(
@@ -62,3 +62,11 @@ class TagSerializer(serializers.ModelSerializer):
             'slug': {'read_only': True},
             'name': {'required': True},
         }
+
+
+class RecentlyViewedNoteSerializer(serializers.ModelSerializer):
+    note=NoteSerializer()
+    
+    class Meta:
+        model=RecentlyViewedNote
+        fields=("note","viewed_at")

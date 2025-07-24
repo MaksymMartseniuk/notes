@@ -175,21 +175,20 @@ export default function NotesCreate() {
     return () => registerSaveHandle(() => Promise.resolve());
   }, [registerSaveHandle, saveHandle]);
 
-  const updateNoteTitleRecursively=(netes,uuid,newTitle)=>{
+  const updateNoteTitleRecursively = (netes, uuid, newTitle) => {
     return notes.map((note) => {
-    if (note.uuid === uuid) {
-      return { ...note, title: newTitle };
-    }
-    if (note.children?.length) {
-      return {
-        ...note,
-        children: updateNoteTitleRecursively(note.children, uuid, newTitle),
-      };
-    }
-    return note;
-  });
-  }
-
+      if (note.uuid === uuid) {
+        return { ...note, title: newTitle };
+      }
+      if (note.children?.length) {
+        return {
+          ...note,
+          children: updateNoteTitleRecursively(note.children, uuid, newTitle),
+        };
+      }
+      return note;
+    });
+  };
 
   const handleTitleChange = (e) => {
     const newTitle = e.target.value;
@@ -219,7 +218,23 @@ export default function NotesCreate() {
     );
   };
 
-  
+  const addToRecentlyViewed = async (noteUuid) => {
+    await api.post(
+      `notes-api/recently-viewed/`,
+      {
+        note_uuid: noteUuid,
+      },
+      {
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      }
+    );
+  };
+
+  useEffect(() => {
+    if (note.uuid) {
+      addToRecentlyViewed(note.uuid);
+    }
+  }, [note.uuid]);
 
   return (
     <div
