@@ -4,7 +4,7 @@ import "../../styles/settings.css"
 import SettingsProfile from "./settings/SettingsProfile";
 import SettingsAutoSave from "./settings/SettingsAutoSave";
 import SettingsSupport from './settings/SettingsSupport';
-
+import "../../styles/centralModal.css"
 export default function SettingsMenu({ onClose }) {
   const [activeSection, setActiveSection] = useState("Profile");
   const renderContent = () => {
@@ -22,7 +22,7 @@ export default function SettingsMenu({ onClose }) {
   return (
     <>
       <div className="overlay-blur" onClick={onClose}></div>
-      <div className="settings-menu">
+      <div className="central-menu">
         <div className="setting-menu-side-bar">
           <div className="setting-menu-container-header">
           <h2 className="setting-menu-header">Settings</h2>

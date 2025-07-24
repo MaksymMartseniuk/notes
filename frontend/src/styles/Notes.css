@@ -23,15 +23,21 @@
   font-style: normal;
   color: rgba(255, 255, 255, 0.81);
 }
+.recent-title {
+  font-size: 24px;
+  color: #fff;
+  text-align: center;
+}
 .notes-recent {
   grid-row: 2;
 }
 .recent-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-top: 12px;
 }
+
 
 .recent-note-card {
   background-color: #1e1e1e;
@@ -44,9 +50,32 @@
 .recent-note-card:hover {
   background-color: #2a2a2a;
 }
-.recent-note-title{
- font-size: 18px;
+.recent-note-title {
+  font-size: 18px;
   font-weight: 600;
   margin-bottom: 8px;
   color: #fff;
+}
+@media (max-width: 1200px) {
+  .recent-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .recent-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .recent-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 400px) {
+  .recent-grid {
+    grid-template-columns: 1fr;
+  }
 }

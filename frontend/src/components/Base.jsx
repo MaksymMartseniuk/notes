@@ -23,6 +23,7 @@ import DeleteMenu from "./BaseComponent/DeleteMenu";
 import ContentMenu from "./BaseComponent/ContentMenu";
 import VersionNote from "./BaseComponent/VersionNote";
 import ImportSaveModal from "./BaseComponent/ImportSaveModal";
+import FindMenu from "./BaseComponent/FindMenu";
 export default function Base() {
   const { user, loading } = useUser();
   const [notes, setNotes] = useState([]);
@@ -59,6 +60,9 @@ export default function Base() {
 
   const saveHandleRef = useRef(() => Promise.resolve());
   const [expandedNotes, setExpandedNotes] = useState({});
+
+  const [findMenuOpen,setFindMenuOpen]=useState(false);
+  
   const navigate = useNavigate();
 
   const updatedNoteWithDraft = (note) => {
@@ -330,7 +334,7 @@ export default function Base() {
 
         <div className="notes-sidebar-menu">
           <ul className="top-list">
-            <li>Search</li>
+            <li onClick={()=>setFindMenuOpen(true)}>Search</li>
             <li>
               <Link to="/notes">Home</Link>
             </li>
@@ -523,6 +527,10 @@ export default function Base() {
           onClose={() => setImportSaveModalOpen(false)}
           onSave={handleSaveHandle}
         />
+      )}
+
+      {findMenuOpen && (
+        <FindMenu onClose={()=>{setFindMenuOpen(false)}}></FindMenu>
       )}
     </div>
   );
