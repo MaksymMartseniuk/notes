@@ -1,0 +1,80 @@
+.search-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 800px;
+  height: 500px;
+  background-color: #202020;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(189, 189, 189, 0.25);
+  overflow: hidden;
+  font-family: "Segoe UI", sans-serif;
+  color: white;
+}
+
+.search-menu h1 {
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.search-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.search-controls input,
+.search-controls select {
+  padding: 10px 14px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  background-color: #2a2a2a;
+  color: white;
+  flex: 1;
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  padding-right: 4px;
+}
+
+.note-card {
+  background: #2a2a2a;
+  padding: 12px;
+  border-radius: 10px;
+  transition: 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.note-card:hover {
+  background: #353535;
+  border-color: #555;
+}
+
+.note-card h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.note-card p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.no-results {
+  opacity: 0.6;
+  font-size: 16px;
+  text-align: center;
+  grid-column: 1 / -1;
+}

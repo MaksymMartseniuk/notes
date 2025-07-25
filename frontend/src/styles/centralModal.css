@@ -8,18 +8,3 @@
   background: rgba(0, 0, 0, 0.3);
   z-index: 999;
 }
-.central-menu {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 800px;
-  height: 500px;
-  background-color: #202020;
-  border-radius: 16px;
-  display: flex;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
-  box-shadow: 0 10px 30px rgba(189, 189, 189, 0.25);
-  overflow: hidden;
-  font-family: "Segoe UI", sans-serif;
-}

@@ -22,7 +22,7 @@ export default function SettingsMenu({ onClose }) {
   return (
     <>
       <div className="overlay-blur" onClick={onClose}></div>
-      <div className="central-menu">
+      <div className="setting-menu">
         <div className="setting-menu-side-bar">
           <div className="setting-menu-container-header">
           <h2 className="setting-menu-header">Settings</h2>
