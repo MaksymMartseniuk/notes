@@ -21,6 +21,7 @@ from Users_Api.models import UserSettings
 from .cache import _get_notes_tree, _update_notes_cache
 from django.utils.timezone import now
 
+
 # Create your views here.
 class NoteListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -208,36 +209,65 @@ class NoteVersionView(APIView):
         return Response(serializer.data)
 
 
-class TagCreateView(generics.ListCreateAPIView):
+class TagView(APIView):
     serializer_class = TagSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Tag.objects.filter(author=self.request.user)
+    def get(self, request, note_uuid):
+        note = get_object_or_404(Note, uuid=note_uuid, author=request.user)
+        tags = note.tag.all()
+        serializer = self.serializer_class(tags, many=True)
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def post(self, request, note_uuid):
+        note = get_object_or_404(Note, uuid=note_uuid, author=request.user)
 
-class TagDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = TagSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = "slug"
+        tag_name = request.data.get("name", "").strip()
+        if not tag_name:
+            return Response({"detail": "Tag name is required."}, status=400)
 
-    def get_queryset(self):
-        return Tag.objects.filter(author=self.request.user)
+        tag, _ = Tag.objects.get_or_create(name=tag_name)
+        note.tag.add(tag)
+        
+        serializer = self.serializer_class(tag)
+        return Response(serializer.data, status=201)
+    
+    def delete(self,request,note_uuid):
+        note = get_object_or_404(Note, uuid=note_uuid, author=request.user)
+        tag_name = request.data.get("name", "").strip()
 
-    def perform_update(self, serializer):
-        instanse = self.get_object()
-        old_name = instanse.name
-        new_name = self.request.data.get("name", old_name)
-        if old_name != new_name:
-            serializer.save(author=self.request.user, slug=slugify(unidecode(new_name)))
-        else:
-            serializer.save()
+        if not tag_name:
+            return Response({"detail": "Tag name is required."}, status=400)
 
-    def perform_destroy(self, instance):
-        instance.delete()
+        try:
+            tag = note.tag.get(name=tag_name)
+            note.tag.remove(tag)
+            
+            if tag.notes.count() == 0:
+                tag.delete()
+            
+            return Response({"detail": f"Tag '{tag_name}' removed from note."}, status=204)
+        except Tag.DoesNotExist:
+            return Response({"detail": f"Tag '{tag_name}' not found in this note."}, status=404)
+        
+        
+    def update(self,request,note_uuid):
+        note = get_object_or_404(Note, uuid=note_uuid, author=request.user)
+        old_name = request.data.get("old_name", "").strip()
+        new_name = request.data.get("new_name", "").strip()
+        
+        if not old_name or not new_name:
+            return Response({"detail": "Both 'old_name' and 'new_name' are required."}, status=400)
+
+        try:
+            tag = note.tag.get(name=old_name)
+            new_tag, _ = Tag.objects.get_or_create(name=new_name)
+            note.tag.remove(tag)
+            note.tag.add(new_tag)
+            return Response({"detail": f"Tag '{old_name}' renamed to '{new_name}'."}, status=200)
+        except Tag.DoesNotExist:
+            return Response({"detail": f"Tag '{old_name}' not found in this note."}, status=404)
 
 
 class RecentlyViewedNoteView(APIView):
@@ -249,7 +279,7 @@ class RecentlyViewedNoteView(APIView):
         )[:10]
         return Response(
             RecentlyViewedNoteSerializer(notes, many=True).data,
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
     def post(self, request):
@@ -262,5 +292,5 @@ class RecentlyViewedNoteView(APIView):
         RecentlyViewedNote.objects.update_or_create(
             user=request.user, note=note, defaults={"viewed_at": now()}
         )
-        
+
         return Response({"detail": "Saved"}, status=status.HTTP_200_OK)

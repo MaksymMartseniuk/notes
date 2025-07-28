@@ -48,16 +48,16 @@ class NoteVersion(models.Model):
             
     
 class Tag(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    slug=models.SlugField(max_length=255, unique=True, blank=True)
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='tags')
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(unidecode(self.name))
-        super().save(*args, **kwargs)
+    name = models.CharField(max_length=100)
     
     def __str__(self):
         return self.name
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Tag"
+        verbose_name_plural = "Tags"
+    
 
 
 class RecentlyViewedNote(models.Model):

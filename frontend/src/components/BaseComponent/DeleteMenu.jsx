@@ -55,7 +55,7 @@ export default function DeleteMenu({
                 className="delete-menu-restore-button"
                 onClick={() => onRestore(note.uuid)}
               >
-                Відновити
+                Restore
               </button>
             </span>
           ))}

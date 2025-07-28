@@ -24,6 +24,7 @@ import ContentMenu from "./BaseComponent/ContentMenu";
 import VersionNote from "./BaseComponent/VersionNote";
 import ImportSaveModal from "./BaseComponent/ImportSaveModal";
 import FindMenu from "./BaseComponent/FindMenu";
+import TagModal from './BaseComponent/TagModal'
 export default function Base() {
   const { user, loading } = useUser();
   const [notes, setNotes] = useState([]);
@@ -62,6 +63,7 @@ export default function Base() {
   const [expandedNotes, setExpandedNotes] = useState({});
 
   const [findMenuOpen,setFindMenuOpen]=useState(false);
+  const [openTagModal,setOpenTagModal]=useState(false);
   
   const navigate = useNavigate();
 
@@ -505,9 +507,11 @@ export default function Base() {
           selectedUuid={selectedNoteContentMenu}
           onClose={() => setOpenContentMenu(false)}
           onDelete={handleDeleteNote}
+          setOpenTagModal={setOpenTagModal}
         />
+        
       )}
-
+        
       {openDeleteMenuNote && (
         <DeleteMenu
           position={deleteMenuNotePosition}
@@ -531,6 +535,10 @@ export default function Base() {
 
       {findMenuOpen && (
         <FindMenu onClose={()=>{setFindMenuOpen(false)}}></FindMenu>
+      )}
+
+      {openTagModal && (
+        <TagModal onClose={()=>{setOpenTagModal(false)}} selectedUuid={selectedNoteContentMenu}></TagModal>
       )}
     </div>
   );

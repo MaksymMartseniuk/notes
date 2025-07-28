@@ -55,13 +55,7 @@ class NoteVersionSerializer(serializers.ModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ['id', 'name', 'slug']
-        read_only_fields = ['id', 'slug']
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'slug': {'read_only': True},
-            'name': {'required': True},
-        }
+        fields = ['id', 'name']
 
 
 class RecentlyViewedNoteSerializer(serializers.ModelSerializer):

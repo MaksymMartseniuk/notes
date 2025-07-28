@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef,useState } from "react";
 
 export default function ContentMenu({
   position,
   selectedUuid,
   onClose,
   onDelete,
+  setOpenTagModal
 }) {
   const contentMenuRef = useRef(null);
 
@@ -38,7 +39,13 @@ export default function ContentMenu({
           className="content-menu-list-item"
           onClick={() => onDelete(selectedUuid)}
         >
-          Видалити
+          Delete
+        </li>
+        <li className="content-menu-list-item"
+          onClick={()=>{setOpenTagModal(true)
+            
+          }}>
+          Tag
         </li>
       </ul>
     </div>
