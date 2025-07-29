@@ -304,7 +304,7 @@ class NoteSearchAPIView(APIView):
         notes = Note.objects.filter(author=request.user)
         if query:
             if filter_by == "tag":
-                notes = notes.filter(tags__name__icontains=query)
+                notes = notes.filter(tag__name__icontains=query)
             else:
                 notes = notes.filter(title__icontains=query)
         notes = notes.annotate(

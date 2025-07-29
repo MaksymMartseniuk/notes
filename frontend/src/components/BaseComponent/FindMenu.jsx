@@ -8,7 +8,14 @@ export default function FindMenu({ onClose }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("title");
   const [results, setResults] = useState([]);
-  const handleSearch = async () => {
+  
+  useEffect(() => {
+  if (!query.trim()) {
+    setResults([]);
+    return;
+  }
+
+  const timeoutId = setTimeout(async () => {
     try {
       const res = await api.get("/notes-api/notes/search", {
         params: { query, filter },
@@ -22,12 +29,12 @@ export default function FindMenu({ onClose }) {
       console.error("Помилка при пошуку нотаток:", error);
       setResults([]);
     }
-  };
+  }, 1000);
 
-  useEffect(() => {
-    if (query.trim()) handleSearch();
-    else setResults([]);
-  }, [query, filter]);
+  return () => clearTimeout(timeoutId);
+}, [query, filter]);
+
+
   return (
     <>
       <div className="overlay-blur" onClick={onClose}></div>
@@ -61,7 +68,7 @@ export default function FindMenu({ onClose }) {
               </div>
             ))
           ) : (
-            <p className="no-results">Нічого не знайдено</p>
+            <p className="no-results">Nothing found</p>
           )}
         </div>
       </div>

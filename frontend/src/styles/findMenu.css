@@ -50,11 +50,16 @@
 
 .note-card {
   background: #2a2a2a;
-  padding: 12px;
+  padding: 0px 12px 12px 12px;
   border-radius: 10px;
   transition: 0.2s ease;
   cursor: pointer;
   border: 1px solid transparent;
+  height: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
 }
 
 .note-card:hover {
@@ -65,11 +70,18 @@
 .note-card h3 {
   font-size: 18px;
   margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .note-card p {
   font-size: 14px;
   opacity: 0.8;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .no-results {
