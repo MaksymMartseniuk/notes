@@ -2,18 +2,28 @@ import api from "../../api";
 import { useState, useEffect } from "react";
 import "../../styles/findMenu.css";
 import { ACCESS_TOKEN } from "../../constants";
+import { useNavigate } from "react-router-dom";
 export default function FindMenu({ onClose }) {
+  const nav = useNavigate();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("title");
   const [results, setResults] = useState([]);
   const handleSearch = async () => {
-    // make a api for search 
-    const res = await api.get("/notes-api/notes/search", {
-      params: { query, filter },
-      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-    });
-    setResults(res.data)
+    try {
+      const res = await api.get("/notes-api/notes/search", {
+        params: { query, filter },
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+        },
+      });
+
+      setResults(res.data);
+    } catch (error) {
+      console.error("Помилка при пошуку нотаток:", error);
+      setResults([]);
+    }
   };
+
   useEffect(() => {
     if (query.trim()) handleSearch();
     else setResults([]);
@@ -38,9 +48,16 @@ export default function FindMenu({ onClose }) {
         <div className="search-results">
           {results.length > 0 ? (
             results.map((note) => (
-              <div key={note.uuid} className="note-card">
+              <div
+                key={note.uuid}
+                className="note-card"
+                onClick={() => {
+                  nav(`/notes/${note.uuid}`);
+                  onClose();
+                }}
+              >
                 <h3>{note.title}</h3>
-                <p>{note.preview || note.content?.slice(0, 100)}...</p>
+                {note.is_deleted ? <p>Note is deleted</p> : <></>}
               </div>
             ))
           ) : (

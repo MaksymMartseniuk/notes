@@ -20,7 +20,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from Users_Api.models import UserSettings
 from .cache import _get_notes_tree, _update_notes_cache
 from django.utils.timezone import now
-
+from django.db.models import Q, BooleanField, ExpressionWrapper
 
 # Create your views here.
 class NoteListView(APIView):
@@ -294,3 +294,25 @@ class RecentlyViewedNoteView(APIView):
         )
 
         return Response({"detail": "Saved"}, status=status.HTTP_200_OK)
+    
+    
+class NoteSearchAPIView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self,request):
+        query = request.query_params.get("query", "").strip()
+        filter_by = request.query_params.get("filter", "title")
+        notes = Note.objects.filter(author=request.user)
+        if query:
+            if filter_by == "tag":
+                notes = notes.filter(tags__name__icontains=query)
+            else:
+                notes = notes.filter(title__icontains=query)
+        notes = notes.annotate(
+            is_deleted_bool=ExpressionWrapper(
+                Q(is_deleted=True),
+                output_field=BooleanField()
+            )
+        ).order_by("is_deleted_bool", "-updated_at")
+        
+        serializer = NoteSerializer(notes.distinct(), many=True)
+        return Response(serializer.data)
