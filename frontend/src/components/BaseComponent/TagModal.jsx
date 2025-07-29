@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "../../styles/TagModal.css";
 import api from "../../api";
 import { ACCESS_TOKEN } from "../../constants";
+
 export default function TagModal({ onClose, selectedUuid }) {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
@@ -20,8 +21,29 @@ export default function TagModal({ onClose, selectedUuid }) {
           }
         );
 
-        setTags([...tags, res.data]);
+        const newTag = res.data;
+        setTags([...tags, newTag]);
         setTagInput("");
+
+        const draft = localStorage.getItem(`note-draft-${selectedUuid}`);
+        if (draft) {
+          try {
+            const parsed = JSON.parse(draft);
+            const existingTags = Array.isArray(parsed.tag) ? parsed.tag : [];
+            if (!existingTags.includes(newTag.name)) {
+              const updatedNote = {
+                ...parsed,
+                tag: [...existingTags, newTag.name],
+              };
+              localStorage.setItem(
+                `note-draft-${selectedUuid}`,
+                JSON.stringify(updatedNote)
+              );
+            }
+          } catch (e) {
+            console.error("Failed to update draft with new tag", e);
+          }
+        }
       } catch (error) {
         console.error("Failed to add tag", error);
       }
@@ -38,12 +60,27 @@ export default function TagModal({ onClose, selectedUuid }) {
       });
 
       setTags(tags.filter((tag) => tag.name !== tagToDelete.name));
+
+      const draft = localStorage.getItem(`note-draft-${selectedUuid}`);
+      if (draft) {
+        try {
+          const parsed = JSON.parse(draft);
+          const updatedTags = (parsed.tag || []).filter(
+            (t) => t !== tagToDelete.name
+          );
+          const updatedNote = { ...parsed, tag: updatedTags };
+          localStorage.setItem(
+            `note-draft-${selectedUuid}`,
+            JSON.stringify(updatedNote)
+          );
+        } catch (e) {
+          console.error("Failed to update draft after tag deletion", e);
+        }
+      }
     } catch (error) {
       console.error("Failed to delete tag", error);
     }
   };
-
-
 
   useEffect(() => {
     const fetchTags = async () => {

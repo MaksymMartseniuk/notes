@@ -24,7 +24,7 @@ import ContentMenu from "./BaseComponent/ContentMenu";
 import VersionNote from "./BaseComponent/VersionNote";
 import ImportSaveModal from "./BaseComponent/ImportSaveModal";
 import FindMenu from "./BaseComponent/FindMenu";
-import TagModal from './BaseComponent/TagModal'
+import TagModal from "./BaseComponent/TagModal";
 export default function Base() {
   const { user, loading } = useUser();
   const [notes, setNotes] = useState([]);
@@ -62,9 +62,9 @@ export default function Base() {
   const saveHandleRef = useRef(() => Promise.resolve());
   const [expandedNotes, setExpandedNotes] = useState({});
 
-  const [findMenuOpen,setFindMenuOpen]=useState(false);
-  const [openTagModal,setOpenTagModal]=useState(false);
-  
+  const [findMenuOpen, setFindMenuOpen] = useState(false);
+  const [openTagModal, setOpenTagModal] = useState(false);
+
   const navigate = useNavigate();
 
   const updatedNoteWithDraft = (note) => {
@@ -336,7 +336,7 @@ export default function Base() {
 
         <div className="notes-sidebar-menu">
           <ul className="top-list">
-            <li onClick={()=>setFindMenuOpen(true)}>Search</li>
+            <li onClick={() => setFindMenuOpen(true)}>Search</li>
             <li>
               <Link to="/notes">Home</Link>
             </li>
@@ -509,9 +509,8 @@ export default function Base() {
           onDelete={handleDeleteNote}
           setOpenTagModal={setOpenTagModal}
         />
-        
       )}
-        
+
       {openDeleteMenuNote && (
         <DeleteMenu
           position={deleteMenuNotePosition}
@@ -534,11 +533,20 @@ export default function Base() {
       )}
 
       {findMenuOpen && (
-        <FindMenu onClose={()=>{setFindMenuOpen(false)}}></FindMenu>
+        <FindMenu
+          onClose={() => {
+            setFindMenuOpen(false);
+          }}
+        ></FindMenu>
       )}
 
       {openTagModal && (
-        <TagModal onClose={()=>{setOpenTagModal(false)}} selectedUuid={selectedNoteContentMenu}></TagModal>
+        <TagModal
+          onClose={() => {
+            setOpenTagModal(false);
+          }}
+          selectedUuid={selectedNoteContentMenu}
+        ></TagModal>
       )}
     </div>
   );
