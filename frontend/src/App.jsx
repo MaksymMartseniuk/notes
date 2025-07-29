@@ -24,8 +24,9 @@ function RegisterAndLogout() {
 export default function App() {
   useAutoTokenRefresh();
   return (
-    <UserContextProvider>
+    
       <BrowserRouter>
+      <UserContextProvider>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -54,7 +55,8 @@ export default function App() {
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
+         </UserContextProvider>
       </BrowserRouter>
-    </UserContextProvider>
+   
   );
 }
