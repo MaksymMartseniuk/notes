@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import "../styles/Form.css";
 import GoogleLoginButton from "../components/GoogleAuth";
+import useUser from "../hooks/useUser"
 
 function Forms({ route, method }) {
     const [text, setText] = useState("Continue");
@@ -12,7 +13,7 @@ function Forms({ route, method }) {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState(null);
-
+    const { loadUser } = useUser();
     const navigate = useNavigate();
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -65,6 +66,7 @@ function Forms({ route, method }) {
             if (method === "login") {
                 localStorage.setItem(ACCESS_TOKEN, res.data.access);
                 localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+                await loadUser();
                 navigate("/notes");
             } else {
                 navigate("/check-email");
