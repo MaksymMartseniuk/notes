@@ -91,13 +91,14 @@ export default function Base() {
     return updatedNote;
   };
 
-  const fetchNotes = () => {
-    api
+  const fetchNotes = async () => {
+    await api
       .get("/notes-api/notes/")
       .then((res) => {
         const updatedNotes = res.data.map(updatedNoteWithDraft);
-
+        console.log(res.data);
         setNotes(updatedNotes);
+        
       })
       .catch((err) => console.error("Помилка отримання нотаток:", err));
   };

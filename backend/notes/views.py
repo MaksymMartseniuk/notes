@@ -110,10 +110,10 @@ class NoteGetOrCreateView(APIView):
 
         cleaned_data = serializer.validated_data.copy()
 
-        if "parent" in cleaned_data and cleaned_data["parent"]:
-            cleaned_data["parent"] = cleaned_data["parent"].id
+        if "parent" in cleaned_data:
+            cleaned_data["parent"] = cleaned_data["parent"].id if cleaned_data["parent"] else None
 
-        if "tag" in cleaned_data and cleaned_data["tag"]:
+        if "tag" in cleaned_data:
             cleaned_data["tag"] = [tag.id for tag in cleaned_data["tag"]]
 
         safe_data = json.loads(json.dumps(cleaned_data, cls=DjangoJSONEncoder))
