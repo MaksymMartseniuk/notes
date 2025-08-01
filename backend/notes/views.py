@@ -91,8 +91,6 @@ class NoteGetOrCreateView(APIView):
             AsyncResult(old_version_task_id).revoke(terminate=True)
             cache.delete(version_task_id_key)
 
-        print(f"Note {note.id} updated with data: {serializer.validated_data}")
-
         if force_save:
             serializer.save()
             cache.delete(cache_key)
@@ -204,8 +202,6 @@ class NoteVersionView(APIView):
         note = get_object_or_404(Note, uuid=uuid, author=request.user)
         version = get_object_or_404(NoteVersion, id=version_id, note=note)
         serializer = NoteVersionSerializer(version)
-        print(f"Retrieved version {version_id} for note {uuid}")
-        print(f"Version data: {serializer.data}")
         return Response(serializer.data)
 
 
