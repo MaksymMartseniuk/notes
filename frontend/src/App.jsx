@@ -16,6 +16,7 @@ import Base from "./components/Base.jsx";
 import Notes from "./pages/Notes";
 import NotesCreate from "./pages/NotesCreate";
 
+import { AutoSaveProvider } from "./contexts/AutoSaveContext.jsx";
 
 function RegisterAndLogout() {
   localStorage.clear();
@@ -24,38 +25,42 @@ function RegisterAndLogout() {
 export default function App() {
   useAutoTokenRefresh();
   return (
-    
-      <BrowserRouter>
+    <BrowserRouter>
       <UserContextProvider>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<RegisterAndLogout />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/reset-password/:uid/:token"
-            element={<PasswordResetCondirm />}
-          />
-          <Route
-            path="/activate/:uid/:token"
-            element={<EmailVerification />}
-          ></Route>
-          <Route path="/check-email" element={<CheckEmail />} />
-          <Route
-            path="/notes"
-            element={
-              <ProtectedRoute>
-                <Base />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Notes />} />
-            <Route path=":uuid" element={<NotesCreate />} />
-            <Route path=":uuid/versions/:versionId" element={<NotesCreate  />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        </UserContextProvider>
-      </BrowserRouter>
+        <AutoSaveProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<RegisterAndLogout />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              path="/reset-password/:uid/:token"
+              element={<PasswordResetCondirm />}
+            />
+            <Route
+              path="/activate/:uid/:token"
+              element={<EmailVerification />}
+            ></Route>
+            <Route path="/check-email" element={<CheckEmail />} />
+            <Route
+              path="/notes"
+              element={
+                <ProtectedRoute>
+                  <Base />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Notes />} />
+              <Route path=":uuid" element={<NotesCreate />} />
+              <Route
+                path=":uuid/versions/:versionId"
+                element={<NotesCreate />}
+              />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AutoSaveProvider>
+      </UserContextProvider>
+    </BrowserRouter>
   );
 }

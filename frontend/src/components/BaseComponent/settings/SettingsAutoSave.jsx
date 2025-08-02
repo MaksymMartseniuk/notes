@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../../api";
 import { Switch } from "@radix-ui/react-switch";
+import { useAutoSave } from "../../../contexts/AutoSaveContext";
 
 export default function SettingsAutoSave() {
   const [autosaveEnabled, setAutosaveEnabled] = useState(true);
@@ -9,7 +10,7 @@ export default function SettingsAutoSave() {
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [isChecked, setIsChecked] = useState(true);
-
+  const { checkUpdateAutoSave, setCheckUpdateAutoSave } = useAutoSave();
   useEffect(() => {
     const fetchSettings = async () => {
       setLoading(true);
@@ -48,6 +49,7 @@ export default function SettingsAutoSave() {
         autosave_enabled: isChecked,
         autosave_interval_minutes: intervalMinutes,
       });
+      setCheckUpdateAutoSave(true);
       setStatusMessage("Налаштування збережено успішно.");
     } catch (error) {
       setStatusMessage("Помилка збереження налаштувань.");
