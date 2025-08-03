@@ -68,7 +68,7 @@ This project empowers developers to build and extend a modern note platform with
 
 This project requires the following dependencies:
 
-- **Programming Language:** JavaScript
+- **Programming Language:** Python, JavaScript
 - **Package Manager:** Pipenv, Npm
 - **Container Runtime:** Docker
 
