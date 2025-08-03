@@ -11,6 +11,7 @@
 <!-- BADGES -->
 <img src="https://img.shields.io/github/last-commit/MaksymMartseniuk/notes?style=flat&logo=git&logoColor=white&color=0080ff" alt="last-commit">
 <img src="https://img.shields.io/github/languages/top/MaksymMartseniuk/notes?style=flat&color=0080ff" alt="repo-top-language">
+<img src="https://img.shields.io/github/languages/top/MaksymMartseniuk/notes?style=flat&color=0080ff" alt="repo-top-language">
 <img src="https://img.shields.io/github/languages/count/MaksymMartseniuk/notes?style=flat&color=0080ff" alt="repo-language-count">
 
 <em>Built with the tools and technologies:</em>
