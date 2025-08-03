@@ -25,6 +25,9 @@ import VersionNote from "./BaseComponent/VersionNote";
 import ImportSaveModal from "./BaseComponent/ImportSaveModal";
 import FindMenu from "./BaseComponent/FindMenu";
 import TagModal from "./BaseComponent/TagModal";
+import { useParams } from "react-router-dom";
+
+
 export default function Base() {
   const { user, loading } = useUser();
   const [notes, setNotes] = useState([]);
@@ -64,6 +67,8 @@ export default function Base() {
 
   const [findMenuOpen, setFindMenuOpen] = useState(false);
   const [openTagModal, setOpenTagModal] = useState(false);
+
+  const { uuid, versionId } = useParams();
 
   const navigate = useNavigate();
 
@@ -131,6 +136,8 @@ export default function Base() {
   }, [isUuidInPath, selectedNoteUuid]);
 
   useEffect(() => {
+    if (versionId) return;
+
     const uuidFromPath = pathname.split("/").at(-1);
     if (!validateUUID(uuidFromPath)) {
       setNoteTitle("");
@@ -159,7 +166,7 @@ export default function Base() {
       setSelectedNoteUuid(uuidFromPath);
       setNoteTitle("");
     }
-  }, [pathname, notes]);
+  }, [uuid, versionId, notes, deletedNotes]);
 
   const toggleFavorite = async () => {
     if (!selectedNoteUuid) return;
@@ -521,6 +528,7 @@ export default function Base() {
               notes,
               setNotes,
               selectedNoteUuid,
+              setNoteTitle
             }}
           />
         </main>

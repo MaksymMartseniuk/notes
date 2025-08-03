@@ -12,7 +12,7 @@ import { createPortal } from "react-dom";
 import useNoteBuffer from "../hooks/useNoteBuffer";
 
 export default function NotesCreate() {
-  const { fetchNotes, registerSaveHandle, setNotes, selectedNoteUuid } =
+  const { fetchNotes, registerSaveHandle, setNotes, selectedNoteUuid,setNoteTitle } =
     useOutletContext();
   const { uuid, versionId } = useParams();
   const [note, setNote] = useState({ title: "", content: "" });
@@ -66,6 +66,7 @@ export default function NotesCreate() {
       try {
         const parsedDraft = JSON.parse(draft);
         setNote(parsedDraft);
+        setNoteTitle(parsedDraft.title || "Нова нотатка");
         setLoading(true);
         fetchNotes();
         return;
@@ -81,6 +82,7 @@ export default function NotesCreate() {
       })
       .then((res) => {
         setNote(res.data);
+        setNoteTitle(res.data.title || "Нова нотатка");
         setLoading(true);
         fetchNotes();
         console.log("Завантажено нотатку:", res.data);
