@@ -27,6 +27,7 @@ import FindMenu from "./BaseComponent/FindMenu";
 import TagModal from "./BaseComponent/TagModal";
 import { useParams } from "react-router-dom";
 
+import NoteAccessContext from "../contexts/NoteAccessContext";
 
 export default function Base() {
   const { user, loading } = useUser();
@@ -69,7 +70,7 @@ export default function Base() {
   const [openTagModal, setOpenTagModal] = useState(false);
 
   const { uuid, versionId } = useParams();
-
+  const isReadOnly = Boolean(versionId);
   const navigate = useNavigate();
 
   const updatedNoteWithDraft = (note) => {
@@ -340,258 +341,269 @@ export default function Base() {
     }
   };
   const handleExportToWord = async () => {
-  try {
-    const response = await api.get(`/notes-api/notes/${selectedNoteUuid}/export/word/`, {
-      responseType: 'blob',
-      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-    });
+    try {
+      const response = await api.get(
+        `/notes-api/notes/${selectedNoteUuid}/export/word/`,
+        {
+          responseType: "blob",
+          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+        }
+      );
 
-    const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.download = `${noteTitle || "note"}.docx`;
-    link.click();
-  } catch (error) {
-    console.error("Помилка експорту у Word:", error);
-  }
-};
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `${noteTitle || "note"}.docx`;
+      link.click();
+    } catch (error) {
+      console.error("Помилка експорту у Word:", error);
+    }
+  };
   if (loading) return;
   if (!user) return;
 
   return (
-    <div className="container">
-      <nav className="sidebar-container">
-        <div className="notes-sidebar-swicher">
-          <span className="notes-sidebar-username">
-            {user.username.length > 15
-              ? user.username.slice(0, 15) + "..."
-              : user.username}
-          </span>
-          <button
-            className="notes-sidebar-swicher-button"
-            onClick={handleCreateNote}
-          >
-            <FontAwesomeIcon icon={faPen} className="button-icon" />
-          </button>
-        </div>
+    <NoteAccessContext.Provider value={{ isReadOnly }}>
+      <div className="container">
+        <nav className="sidebar-container">
+          <div className="notes-sidebar-swicher">
+            <span className="notes-sidebar-username">
+              {user.username.length > 15
+                ? user.username.slice(0, 15) + "..."
+                : user.username}
+            </span>
+            <button
+              className="notes-sidebar-swicher-button"
+              onClick={handleCreateNote}
+            >
+              <FontAwesomeIcon icon={faPen} className="button-icon" />
+            </button>
+          </div>
 
-        <div className="notes-sidebar-menu">
-          <ul className="top-list">
-            <li onClick={() => setFindMenuOpen(true)}>Search</li>
-            <li>
-              <Link to="/notes">Home</Link>
-            </li>
-          </ul>
+          <div className="notes-sidebar-menu">
+            <ul className="top-list">
+              <li onClick={() => setFindMenuOpen(true)}>Search</li>
+              <li>
+                <Link to="/notes">Home</Link>
+              </li>
+            </ul>
 
-          <h1>Private</h1>
-          <ul className="notes-sidebar-menu">
-            {notes.map((note) => (
-              <li key={note.id}>
-                <div
-                  className="note-sidebar-item"
-                  onClick={() => navigate(`/notes/${note.uuid}`)}
-                >
-                  <span className="note-sidebar-item-title">
-                    {note.title.length > 15
-                      ? note.title.slice(0, 15) + "…"
-                      : note.title}
-                  </span>
+            <h1>Private</h1>
+            <ul className="notes-sidebar-menu">
+              {notes.map((note) => (
+                <li key={note.id}>
+                  <div
+                    className="note-sidebar-item"
+                    onClick={() => navigate(`/notes/${note.uuid}`)}
+                  >
+                    <span className="note-sidebar-item-title">
+                      {note.title.length > 15
+                        ? note.title.slice(0, 15) + "…"
+                        : note.title}
+                    </span>
 
-                  <div className="icons-wrapper">
-                    {Array.isArray(note.children) &&
-                      note.children.length > 0 && (
+                    <div className="icons-wrapper">
+                      {Array.isArray(note.children) &&
+                        note.children.length > 0 && (
+                          <FontAwesomeIcon
+                            className="button-icon note-sidebar-icon"
+                            icon={
+                              expandedNotes[note.id]
+                                ? faArrowDown
+                                : faArrowRight
+                            }
+                            onClick={(e) => toggleChildren(note.id, e)}
+                          />
+                        )}
+
+                      {!openContentMenu && (
                         <FontAwesomeIcon
-                          className="button-icon note-sidebar-icon"
-                          icon={
-                            expandedNotes[note.id] ? faArrowDown : faArrowRight
-                          }
-                          onClick={(e) => toggleChildren(note.id, e)}
+                          icon={faEllipsis}
+                          className="note-sidebar-icon button-icon"
+                          onClick={(e) => {
+                            setOpenContentMenu(true);
+                            handleContentMenuClick(e, note.uuid);
+                          }}
                         />
                       )}
 
-                    {!openContentMenu && (
-                      <FontAwesomeIcon
-                        icon={faEllipsis}
-                        className="note-sidebar-icon button-icon"
-                        onClick={(e) => {
-                          setOpenContentMenu(true);
-                          handleContentMenuClick(e, note.uuid);
-                        }}
-                      />
-                    )}
-
-                    {!openContentMenu && (
-                      <FontAwesomeIcon
-                        icon={faPlus}
-                        className="note-sidebar-icon button-icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCreateSubNote(note.id);
-                        }}
-                      />
-                    )}
+                      {!openContentMenu && (
+                        <FontAwesomeIcon
+                          icon={faPlus}
+                          className="note-sidebar-icon button-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCreateSubNote(note.id);
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {expandedNotes[note.id] && note.children.length > 0 && (
-                  <ul>
-                    {note.children.map((child) => (
-                      <li key={child.uuid}>
-                        <div
-                          className="note-sidebar-item"
-                          onClick={() => navigate(`/notes/${child.uuid}`)}
-                        >
-                          <span className="note-sidebar-item-title">
-                            {child.title.length > 15
-                              ? child.title.slice(0, 15) + "…"
-                              : child.title}
-                          </span>
-                          <div className="icons-wrapper">
-                            <FontAwesomeIcon
-                              icon={faEllipsis}
-                              className="note-sidebar-icon button-icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleContentMenuClick(e, child.uuid);
-                              }}
-                            />
+                  {expandedNotes[note.id] && note.children.length > 0 && (
+                    <ul>
+                      {note.children.map((child) => (
+                        <li key={child.uuid}>
+                          <div
+                            className="note-sidebar-item"
+                            onClick={() => navigate(`/notes/${child.uuid}`)}
+                          >
+                            <span className="note-sidebar-item-title">
+                              {child.title.length > 15
+                                ? child.title.slice(0, 15) + "…"
+                                : child.title}
+                            </span>
+                            <div className="icons-wrapper">
+                              <FontAwesomeIcon
+                                icon={faEllipsis}
+                                className="note-sidebar-icon button-icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContentMenuClick(e, child.uuid);
+                                }}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
 
-          <ul className="bottom-list top-list">
-            <li
-              onClick={(e) => {
-                setOpenSettingsMenu(true);
-              }}
-            >
-              Settings
-            </li>
-            <li
-              onClick={(e) => {
-                handleDeleteButtonClick(e);
-                fetchDeletedNotes();
-              }}
-            >
-              Trash
-            </li>
-          </ul>
-        </div>
-      </nav>
-
-      <div className="div-content">
-        {isUuidInPath && (
-          <header className="header-notes-container">
-            <h2 className="header-notes-title">
-              {noteTitle.length > 25 ? noteTitle.slice(0, 25) + "…" : noteTitle}
-            </h2>
-            <div className="header-note-icons">
-              <FontAwesomeIcon
-                className="button-icon"
-                icon={faClockRotateLeft}
-                ref={clockButtonRef}
-                onClick={handleClockButtonClick}
-                style={{ cursor: "pointer" }}
-              />
-              <FontAwesomeIcon
-                className="button-icon"
-                icon={isFavorite ? faStarSolid : faStarRegular}
-                onClick={toggleFavorite}
-                style={{
-                  cursor: "pointer",
-                  color: isFavorite ? "gold" : "white",
-                }}
-              />
-              <FontAwesomeIcon
-                className="button-icon"
-                icon={faEllipsis}
-                style={{ cursor: "pointer" }}
+            <ul className="bottom-list top-list">
+              <li
                 onClick={(e) => {
-                  handleImportSaveButtonClick(e);
+                  setOpenSettingsMenu(true);
                 }}
-              />
-            </div>
-          </header>
+              >
+                Settings
+              </li>
+              <li
+                onClick={(e) => {
+                  handleDeleteButtonClick(e);
+                  fetchDeletedNotes();
+                }}
+              >
+                Trash
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <div className="div-content">
+          {isUuidInPath && (
+            <header className="header-notes-container">
+              <h2 className="header-notes-title">
+                {noteTitle.length > 25
+                  ? noteTitle.slice(0, 25) + "…"
+                  : noteTitle}
+              </h2>
+              <div className="header-note-icons">
+                <FontAwesomeIcon
+                  className="button-icon"
+                  icon={faClockRotateLeft}
+                  ref={clockButtonRef}
+                  onClick={handleClockButtonClick}
+                  style={{ cursor: "pointer" }}
+                />
+                <FontAwesomeIcon
+                  className="button-icon"
+                  icon={isFavorite ? faStarSolid : faStarRegular}
+                  onClick={toggleFavorite}
+                  style={{
+                    cursor: "pointer",
+                    color: isFavorite ? "gold" : "white",
+                  }}
+                />
+                <FontAwesomeIcon
+                  className="button-icon"
+                  icon={faEllipsis}
+                  style={{ cursor: "pointer" }}
+                  onClick={(e) => {
+                    handleImportSaveButtonClick(e);
+                  }}
+                />
+              </div>
+            </header>
+          )}
+
+          <main className="main-notes-container">
+            <Outlet
+              context={{
+                fetchNotes,
+                registerSaveHandle,
+                notes,
+                setNotes,
+                selectedNoteUuid,
+                setNoteTitle,
+              }}
+            />
+          </main>
+        </div>
+
+        {openSelectVersionNote && (
+          <VersionNote
+            position={popoverPosition}
+            versions={noteVersions}
+            selectedUuid={selectedNoteUuid}
+            onClose={() => setOpenSelectVersionNote(false)}
+          />
         )}
 
-        <main className="main-notes-container">
-          <Outlet
-            context={{
-              fetchNotes,
-              registerSaveHandle,
-              notes,
-              setNotes,
-              selectedNoteUuid,
-              setNoteTitle
-            }}
+        {openContentMenu && (
+          <ContentMenu
+            position={contentMenuPosition}
+            selectedUuid={selectedNoteContentMenu}
+            onClose={() => setOpenContentMenu(false)}
+            onDelete={handleDeleteNote}
+            setOpenTagModal={setOpenTagModal}
           />
-        </main>
+        )}
+
+        {openDeleteMenuNote && (
+          <DeleteMenu
+            position={deleteMenuNotePosition}
+            deletedNotes={deletedNotes}
+            onClose={() => setOpenDeleteMenuNote(false)}
+            onRestore={handleRestoreNote}
+            onNavigate={(uuid) => navigate(`/notes/${uuid}`)}
+          />
+        )}
+
+        {openSettingsMenu && (
+          <SettingsMenu onClose={() => setOpenSettingsMenu(false)} />
+        )}
+        {importSaveModalOpen && (
+          <ImportSaveModal
+            position={importSaveModalPosition}
+            onClose={() => setImportSaveModalOpen(false)}
+            onSave={handleSaveHandle}
+            onImportWord={handleExportToWord}
+            onImportPDF={handleExportToPDF}
+          />
+        )}
+
+        {findMenuOpen && (
+          <FindMenu
+            onClose={() => {
+              setFindMenuOpen(false);
+            }}
+          ></FindMenu>
+        )}
+
+        {openTagModal && (
+          <TagModal
+            onClose={() => {
+              setOpenTagModal(false);
+            }}
+            selectedUuid={selectedNoteContentMenu}
+          ></TagModal>
+        )}
       </div>
-
-      {openSelectVersionNote && (
-        <VersionNote
-          position={popoverPosition}
-          versions={noteVersions}
-          selectedUuid={selectedNoteUuid}
-          onClose={() => setOpenSelectVersionNote(false)}
-        />
-      )}
-
-      {openContentMenu && (
-        <ContentMenu
-          position={contentMenuPosition}
-          selectedUuid={selectedNoteContentMenu}
-          onClose={() => setOpenContentMenu(false)}
-          onDelete={handleDeleteNote}
-          setOpenTagModal={setOpenTagModal}
-        />
-      )}
-
-      {openDeleteMenuNote && (
-        <DeleteMenu
-          position={deleteMenuNotePosition}
-          deletedNotes={deletedNotes}
-          onClose={() => setOpenDeleteMenuNote(false)}
-          onRestore={handleRestoreNote}
-          onNavigate={(uuid) => navigate(`/notes/${uuid}`)}
-        />
-      )}
-
-      {openSettingsMenu && (
-        <SettingsMenu onClose={() => setOpenSettingsMenu(false)} />
-      )}
-      {importSaveModalOpen && (
-        <ImportSaveModal
-          position={importSaveModalPosition}
-          onClose={() => setImportSaveModalOpen(false)}
-          onSave={handleSaveHandle}
-          onImportWord={handleExportToWord}
-          onImportPDF={handleExportToPDF}
-        />
-      )}
-
-      {findMenuOpen && (
-        <FindMenu
-          onClose={() => {
-            setFindMenuOpen(false);
-          }}
-        ></FindMenu>
-      )}
-
-      {openTagModal && (
-        <TagModal
-          onClose={() => {
-            setOpenTagModal(false);
-          }}
-          selectedUuid={selectedNoteContentMenu}
-        ></TagModal>
-      )}
-    </div>
+    </NoteAccessContext.Provider>
   );
 }

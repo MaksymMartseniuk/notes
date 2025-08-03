@@ -10,11 +10,18 @@ import "../styles/NotesCreate.css";
 import "../styles/Tiptap.css";
 import { createPortal } from "react-dom";
 import useNoteBuffer from "../hooks/useNoteBuffer";
+import { useNoteAccess } from "../contexts/NoteAccessContext";
 
 export default function NotesCreate() {
-  const { fetchNotes, registerSaveHandle, setNotes, selectedNoteUuid,setNoteTitle } =
-    useOutletContext();
+  const {
+    fetchNotes,
+    registerSaveHandle,
+    setNotes,
+    selectedNoteUuid,
+    setNoteTitle,
+  } = useOutletContext();
   const { uuid, versionId } = useParams();
+  const { isReadOnly } = useNoteAccess();
   const [note, setNote] = useState({ title: "", content: "" });
   const [loading, setLoading] = useState(false);
   const [slashCommandOpen, setSlashCommandOpen] = useState(false);
@@ -35,6 +42,7 @@ export default function NotesCreate() {
     onUpdate: ({ editor }) => {
       setNote((prev) => ({ ...prev, content: editor.getHTML() }));
     },
+    editable: () => !isReadOnly,
     onCreate: ({ editor }) => {
       editor.view.dom.addEventListener("keydown", (event) => {
         if (event.key === "/") {
@@ -57,6 +65,12 @@ export default function NotesCreate() {
       });
     },
   });
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!isReadOnly);
+    }
+  }, [editor, isReadOnly]);
 
   useEffect(() => {
     if (!uuid) return;
@@ -250,6 +264,7 @@ export default function NotesCreate() {
         onChange={handleTitleChange}
         placeholder="Заголовок"
         rows={1}
+        disabled={isReadOnly}
       />
 
       <div className="note-content">

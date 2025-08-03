@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useNoteAccess } from "../../contexts/NoteAccessContext";
 
 export default function ImportSaveModal({
   onClose,
@@ -8,6 +9,7 @@ export default function ImportSaveModal({
   onImportPDF,
 }) {
   const importSaveModalRef = useRef(null);
+  const { isReadOnly } = useNoteAccess();
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -24,43 +26,45 @@ export default function ImportSaveModal({
     };
   }, [onClose]);
   return (
-    <div
-      ref={importSaveModalRef}
-      className="import-save-modal"
-      style={{
-        top: `${position.top + 10}px`,
-        left: `${position.left - 110}px`,
-      }}
-    >
-      <ul className="import-save-list">
-        <li
-          className="import-save-list-item"
-          onClick={() => {
-            onImportWord();
-            onClose();
-          }}
-        >
-          Import in World
-        </li>
-        <li
-          className="import-save-list-item"
-          onClick={() => {
-            onImportPDF();
-            onClose();
-          }}
-        >
-          Import in PDF
-        </li>
-        <li
-          className="import-save-list-item"
-          onClick={() => {
-            onSave();
-            onClose();
-          }}
-        >
-          Save
-        </li>
-      </ul>
-    </div>
+      <div
+        ref={importSaveModalRef}
+        className="import-save-modal"
+        style={{
+          top: `${position.top + 10}px`,
+          left: `${position.left - 110}px`,
+        }}
+      >
+        <ul className="import-save-list">
+          <li
+            className="import-save-list-item"
+            onClick={() => {
+              onImportWord();
+              onClose();
+            }}
+          >
+            Import in World
+          </li>
+          <li
+            className="import-save-list-item"
+            onClick={() => {
+              onImportPDF();
+              onClose();
+            }}
+          >
+            Import in PDF
+          </li>
+          {!isReadOnly && (
+            <li
+              className="import-save-list-item"
+              onClick={() => {
+                onSave();
+                onClose();
+              }}
+            >
+              Save
+            </li>
+          )}
+        </ul>
+      </div>
   );
 }
