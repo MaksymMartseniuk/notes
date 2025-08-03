@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function VersionNote({
@@ -8,10 +8,23 @@ export default function VersionNote({
   onClose,
 }) {
   const navigate = useNavigate();
+  const versionNoteRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutSide = (event) => {
+      if (versionNoteRef.current && !versionNoteRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutSide);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutSide);
+    };
+  }, [onClose]);
 
   return (
     <div
       className="popover-version-window"
+      ref={versionNoteRef}
       style={{
         top: position.top + 10,
         left: position.left - 220,
@@ -20,7 +33,7 @@ export default function VersionNote({
       <h1>Версії нотатки</h1>
       <ul className="version-list">
         {versions.map((version) => (
-          <li 
+          <li
             className="version-list-item"
             key={version.id}
             onClick={() => {
@@ -28,15 +41,13 @@ export default function VersionNote({
               onClose();
             }}
           >
-            {new Date(version.created_at).toLocaleDateString()} -
-            {" "}
+            {new Date(version.created_at).toLocaleDateString()} -{" "}
             {version.title.length > 20
               ? version.title.slice(0, 20) + "…"
               : version.title}
           </li>
         ))}
       </ul>
-      <button onClick={onClose}>Закрити</button>
     </div>
   );
 }
