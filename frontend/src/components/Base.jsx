@@ -98,7 +98,6 @@ export default function Base() {
         const updatedNotes = res.data.map(updatedNoteWithDraft);
         console.log(res.data);
         setNotes(updatedNotes);
-        
       })
       .catch((err) => console.error("Помилка отримання нотаток:", err));
   };
@@ -315,6 +314,40 @@ export default function Base() {
     }));
   };
 
+  const handleExportToPDF = async () => {
+    try {
+      const response = await api.get(
+        `/notes-api/notes/${selectedNoteUuid}/export/pdf/`,
+        {
+          responseType: "blob",
+          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+        }
+      );
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `${noteTitle || "note"}.pdf`;
+      link.click();
+    } catch (error) {
+      console.error("Помилка експорту у PDF:", error);
+    }
+  };
+  const handleExportToWord = async () => {
+  try {
+    const response = await api.get(`/notes-api/notes/${selectedNoteUuid}/export/word/`, {
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    });
+
+    const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = `${noteTitle || "note"}.docx`;
+    link.click();
+  } catch (error) {
+    console.error("Помилка експорту у Word:", error);
+  }
+};
   if (loading) return;
   if (!user) return;
 
@@ -530,6 +563,8 @@ export default function Base() {
           position={importSaveModalPosition}
           onClose={() => setImportSaveModalOpen(false)}
           onSave={handleSaveHandle}
+          onImportWord={handleExportToWord}
+          onImportPDF={handleExportToPDF}
         />
       )}
 

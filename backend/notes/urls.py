@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import NoteListView, NoteGetOrCreateView, TagView, NoteVersionListView,DeleteNoteListView, NoteRestoreView, NoteVersionView,RecentlyViewedNoteView,NoteSearchAPIView
+from .views import (NoteListView, NoteGetOrCreateView, TagView,
+                    NoteVersionListView,DeleteNoteListView, NoteRestoreView,
+                    NoteVersionView,RecentlyViewedNoteView,NoteSearchAPIView,
+                     ExportNotePDFAPIView,ExportNoteWordAPIView)
 
 
 
@@ -12,5 +15,7 @@ urlpatterns = [
     path('notes/<uuid:uuid>/versions/<int:version_id>/', NoteVersionView.as_view(), name='note-version-detail'),
     path('notes/<uuid:note_uuid>/tags/', TagView.as_view()),
     path("notes/search", NoteSearchAPIView.as_view(), name="note-search"),
+    path("notes/<uuid:uuid>/export/word/", ExportNoteWordAPIView.as_view(), name="export-note-word"),
+    path("notes/<uuid:uuid>/export/pdf/", ExportNotePDFAPIView.as_view(), name="export-note-pdf"),
     path("recently-viewed/",RecentlyViewedNoteView.as_view(),name='recently-viewed'),
 ]

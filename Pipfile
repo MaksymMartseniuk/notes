@@ -26,6 +26,9 @@ django-celery-beat = "*"
 flower = "*"
 django-extensions = "*"
 celery = "*"
+python-docx = "*"
+weasyprint = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 

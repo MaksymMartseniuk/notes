@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 
-export default function ImportSaveModal({ onClose, position, onSave }) {
+export default function ImportSaveModal({
+  onClose,
+  position,
+  onSave,
+  onImportWord,
+  onImportPDF,
+}) {
   const importSaveModalRef = useRef(null);
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -27,12 +33,29 @@ export default function ImportSaveModal({ onClose, position, onSave }) {
       }}
     >
       <ul className="import-save-list">
-        <li className="import-save-list-item">Import in World</li>
-        <li className="import-save-list-item">Import in PDF</li>
+        <li
+          className="import-save-list-item"
+          onClick={() => {
+            onImportWord();
+            onClose();
+          }}
+        >
+          Import in World
+        </li>
+        <li
+          className="import-save-list-item"
+          onClick={() => {
+            onImportPDF();
+            onClose();
+          }}
+        >
+          Import in PDF
+        </li>
         <li
           className="import-save-list-item"
           onClick={() => {
             onSave();
+            onClose();
           }}
         >
           Save

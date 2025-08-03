@@ -22,6 +22,12 @@ from .cache import _get_notes_tree, _update_notes_cache
 from django.utils.timezone import now
 from django.db.models import Q, BooleanField, ExpressionWrapper
 
+from bs4 import BeautifulSoup
+from docx import Document
+from weasyprint import HTML
+import tempfile
+from django.http import HttpResponse
+import os
 # Create your views here.
 class NoteListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -312,3 +318,87 @@ class NoteSearchAPIView(APIView):
         
         serializer = NoteSerializer(notes.distinct(), many=True)
         return Response(serializer.data)
+
+class ExportNoteWordAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, uuid):
+        note = get_object_or_404(Note, uuid=uuid, author=request.user)
+
+        html_content = f"""
+        <h1>{note.title}</h1>
+        {note.content}
+        """
+        
+        soup = BeautifulSoup(html_content, "html.parser")
+        doc = Document()
+
+        for element in soup.children:
+            if element.name == 'h1':
+                doc.add_heading(element.get_text(), level=1)
+            elif element.name == 'p':
+                doc.add_paragraph(element.get_text())
+            elif element.name in ['ul', 'ol']:
+                for li in element.find_all('li'):
+                    doc.add_paragraph(li.get_text(), style='ListBullet' if element.name == 'ul' else 'ListNumber')
+            else:
+                if element.string:
+                    doc.add_paragraph(element.string)
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
+        temp_file.close()
+
+        try:
+            doc.save(temp_file.name)
+
+            with open(temp_file.name, 'rb') as f:
+                docx_data = f.read()
+
+            response = HttpResponse(docx_data, content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            response['Content-Disposition'] = f'attachment; filename="{note.title or "note"}.docx"'
+            return response
+        finally:
+            os.unlink(temp_file.name)
+
+class ExportNotePDFAPIView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self,request,uuid):
+        note = get_object_or_404(Note, uuid=uuid, author=request.user)      
+        html_string = f"""
+        <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body {{
+                        font-family: sans-serif;
+                        margin: 2em;
+                    }}
+                    h1 {{
+                        font-size: 24px;
+                        margin-bottom: 1em;
+                    }}
+                    p {{
+                        font-size: 14px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <h1>{note.title}</h1>
+                <p>{note.content}</p>
+            </body>
+        </html>
+        """  
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        temp_file.close()
+
+        try:
+            HTML(string=html_string).write_pdf(temp_file.name)
+
+            with open(temp_file.name, 'rb') as f:
+                pdf_data = f.read()
+
+            response = HttpResponse(pdf_data, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{note.title or "note"}.pdf"'
+            return response
+        finally:
+            os.unlink(temp_file.name)
