@@ -175,7 +175,7 @@ export default function NotesCreate() {
     return () => registerSaveHandle(() => Promise.resolve());
   }, [registerSaveHandle, saveHandle]);
 
-  const updateNoteTitleRecursively = (netes, uuid, newTitle) => {
+  const updateNoteTitleRecursively = (notes, uuid, newTitle) => {
     return notes.map((note) => {
       if (note.uuid === uuid) {
         return { ...note, title: newTitle };
