@@ -348,8 +348,8 @@
 .delete-menu-list-item-wrapper {
   width: 100%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 35%
 }
 
 .delete-menu-list-item {
@@ -359,6 +359,7 @@
   background-color: transparent;
   transform: scale(1);
   transition: transform 0.2s ease, background-color 0.2s ease;
+  padding: 1%;
 }
 
 .delete-menu-list-item:hover {
