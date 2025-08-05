@@ -308,7 +308,6 @@ export default function Base() {
   const handleSaveHandle = async () => {
     try {
       await saveHandleRef.current();
-      alert("Нотатку збережено");
     } catch (error) {
       console.error("Error executing save handle:", error);
     }

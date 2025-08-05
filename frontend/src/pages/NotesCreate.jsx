@@ -35,6 +35,7 @@ export default function NotesCreate() {
   const [imageUrl, setImageUrl] = useState("");
   const location = useLocation();
   const titleRef = useRef(null);
+  const [focused, setFocused] = useState(false);
 
   const editor = useEditor({
     extensions: [StarterKit, Image],
@@ -83,42 +84,41 @@ export default function NotesCreate() {
         })
         .then((res) => {
           setNote(res.data);
-          setNoteTitle(res.data.title || "Нова нотатка");
+          setNoteTitle(res.data.title || "New Note");
           setLoading(true);
           fetchNotes();
-          console.log("Завантажено нотатку версії:", res.data);
         })
         .catch((err) => console.error("Помилка завантаження нотатки:", err));
       return;
     }
 
     const draft = localStorage.getItem(`note-draft-${uuid}`);
-  if (draft) {
-    try {
-      const parsedDraft = JSON.parse(draft);
-      setNote(parsedDraft);
-      setNoteTitle(parsedDraft.title || "Нова нотатка");
-      setLoading(true);
-      fetchNotes();
-      return;
-    } catch {}
-  }
+    if (draft) {
+      try {
+        const parsedDraft = JSON.parse(draft);
+        setNote(parsedDraft);
+        setNoteTitle(parsedDraft.title || "New Note");
+        setLoading(true);
+        fetchNotes();
+        return;
+      } catch {}
+    }
 
-  api
-    .get(`/notes-api/notes/${uuid}/`, {
-      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-    })
-    .then((res) => {
-      setNote(res.data);
-      setNoteTitle(res.data.title || "Нова нотатка");
-      setLoading(true);
-      fetchNotes();
-      console.log("Завантажено нотатку:", res.data);
-    })
-    .catch((err) => console.error("Помилка завантаження нотатки:", err));
+    api
+      .get(`/notes-api/notes/${uuid}/`, {
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      })
+      .then((res) => {
+        setNote(res.data);
+        setNoteTitle(res.data.title || "New Note");
+        setLoading(true);
+        fetchNotes();
+      })
+      .catch((err) => console.error("Помилка завантаження нотатки:", err));
   }, [uuid, versionId]);
+
   const isVersion = Boolean(versionId);
-  useNoteBuffer(uuid, note, loading,isVersion);
+  useNoteBuffer(uuid, note, loading, isVersion);
 
   useEffect(() => {
     if (editor && note.content !== editor.getHTML()) {
@@ -138,7 +138,7 @@ export default function NotesCreate() {
   }, []);
 
   useEffect(() => {
-    document.title = note.title || "Нова нотатка";
+    document.title = note.title || "New Note";
   }, [note.title]);
 
   const insertCommand = (type) => {
@@ -171,7 +171,7 @@ export default function NotesCreate() {
       case "Bullet list":
         editor.commands.toggleBulletList();
         break;
-      case "Цитата":
+      case "Quote":
         editor.commands.setBlockquote();
         break;
       case "Image":
@@ -190,7 +190,7 @@ export default function NotesCreate() {
         `/notes-api/notes/${uuid}/?force_save=true`,
         {
           ...note,
-          title: note.title || "Нова нотатка",
+          title: note.title || "New Note",
         },
         {
           headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
@@ -249,7 +249,7 @@ export default function NotesCreate() {
   };
 
   const addToRecentlyViewed = async (noteUuid) => {
-    if(!noteUuid || isReadOnly) return
+    if (!noteUuid || isReadOnly) return;
     await api.post(
       `notes-api/recently-viewed/`,
       {
@@ -267,6 +267,15 @@ export default function NotesCreate() {
     }
   }, [note.uuid]);
 
+  useEffect(()=>{
+    if(!focused && note.title.trim()===""){
+      setNote((prev) => ({
+      ...prev,
+      title: "New Note",
+    }));
+    }
+  },[focused])
+
   return (
     <div
       className="notes-create-container hide-scrollbar"
@@ -277,9 +286,11 @@ export default function NotesCreate() {
         className="note-title hide-scrollbar"
         value={note.title}
         onChange={handleTitleChange}
-        placeholder="Заголовок"
+        placeholder="New Note"
         rows={1}
         disabled={isReadOnly}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       />
 
       <div className="note-content">
@@ -298,7 +309,7 @@ export default function NotesCreate() {
               <div className="slash-menu-content">
                 <div className="slash-menu-scroll">
                   <div className="slash-menu-group">
-                    <div className="slash-menu-group-title">Основні</div>
+                    <div className="slash-menu-group-title">Main</div>
                     <div onClick={() => insertCommand("Heading 1")}>
                       Heading 1
                     </div>
@@ -314,10 +325,10 @@ export default function NotesCreate() {
                     <div onClick={() => insertCommand("Bullet list")}>
                       Bullet list
                     </div>
-                    <div onClick={() => insertCommand("Цитата")}>Цитата</div>
+                    <div onClick={() => insertCommand("Quote")}>Quote</div>
                   </div>
                   <div className="slash-menu-group">
-                    <div className="slash-menu-group-title">Медіа</div>
+                    <div className="slash-menu-group-title">Media</div>
                     <div onClick={() => insertCommand("Image")}>Image</div>
                   </div>
                 </div>
