@@ -249,6 +249,7 @@ export default function NotesCreate() {
   };
 
   const addToRecentlyViewed = async (noteUuid) => {
+    if(!noteUuid || isReadOnly) return
     await api.post(
       `notes-api/recently-viewed/`,
       {

@@ -2,6 +2,7 @@ import { use, useEffect, useRef, useState } from "react";
 import api from "../api";
 import { ACCESS_TOKEN } from "../constants";
 import { useAutoSave } from "../contexts/AutoSaveContext";
+import { useNoteAccess } from "../contexts/NoteAccessContext";
 
 export default function useNoteBuffer(
   noteId,
@@ -16,6 +17,9 @@ export default function useNoteBuffer(
   const [autosaveIntervalMinutes, setAutosaveIntervalMinutes] = useState(5);
   const { checkUpdateAutoSave, setCheckUpdateAutoSave } = useAutoSave();
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  const { isReadOnly } = useNoteAccess();
+
   useEffect(() => {
     if (!noteId || isVersion) {
       return;
@@ -56,7 +60,7 @@ export default function useNoteBuffer(
   }, [checkUpdateAutoSave, settingsLoaded, setCheckUpdateAutoSave]);
 
   useEffect(() => {
-    if (!enabled || !noteId || !autoSaveEnabled || isVersion) return;
+    if (!enabled || !noteId || !autoSaveEnabled || isVersion || isReadOnly) return;
     clearTimeout(timeoutRef.current);
     localStorage.setItem(`note-draft-${noteId}`, JSON.stringify(note));
     timeoutRef.current = setTimeout(() => {
