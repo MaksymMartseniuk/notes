@@ -75,36 +75,50 @@ export default function NotesCreate() {
   useEffect(() => {
     if (!uuid) return;
 
-    const draft = localStorage.getItem(`note-draft-${uuid}`);
-    if (draft) {
-      try {
-        const parsedDraft = JSON.parse(draft);
-        setNote(parsedDraft);
-        setNoteTitle(parsedDraft.title || "Нова нотатка");
-        setLoading(true);
-        fetchNotes();
-        return;
-      } catch {}
+    if (versionId) {
+      const endpoint = `/notes-api/notes/${uuid}/versions/${versionId}/`;
+      api
+        .get(endpoint, {
+          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+        })
+        .then((res) => {
+          setNote(res.data);
+          setNoteTitle(res.data.title || "Нова нотатка");
+          setLoading(true);
+          fetchNotes();
+          console.log("Завантажено нотатку версії:", res.data);
+        })
+        .catch((err) => console.error("Помилка завантаження нотатки:", err));
+      return;
     }
 
-    const endpoint = versionId
-      ? `/notes-api/notes/${uuid}/versions/${versionId}/`
-      : `/notes-api/notes/${uuid}/`;
-    api
-      .get(endpoint, {
-        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-      })
-      .then((res) => {
-        setNote(res.data);
-        setNoteTitle(res.data.title || "Нова нотатка");
-        setLoading(true);
-        fetchNotes();
-        console.log("Завантажено нотатку:", res.data);
-      })
-      .catch((err) => console.error("Помилка завантаження нотатки:", err));
-  }, [uuid, versionId]);
+    const draft = localStorage.getItem(`note-draft-${uuid}`);
+  if (draft) {
+    try {
+      const parsedDraft = JSON.parse(draft);
+      setNote(parsedDraft);
+      setNoteTitle(parsedDraft.title || "Нова нотатка");
+      setLoading(true);
+      fetchNotes();
+      return;
+    } catch {}
+  }
 
-  useNoteBuffer(uuid, note, loading);
+  api
+    .get(`/notes-api/notes/${uuid}/`, {
+      headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    })
+    .then((res) => {
+      setNote(res.data);
+      setNoteTitle(res.data.title || "Нова нотатка");
+      setLoading(true);
+      fetchNotes();
+      console.log("Завантажено нотатку:", res.data);
+    })
+    .catch((err) => console.error("Помилка завантаження нотатки:", err));
+  }, [uuid, versionId]);
+  const isVersion = Boolean(versionId);
+  useNoteBuffer(uuid, note, loading,isVersion);
 
   useEffect(() => {
     if (editor && note.content !== editor.getHTML()) {

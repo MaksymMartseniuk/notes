@@ -7,6 +7,7 @@ export default function useNoteBuffer(
   noteId,
   note,
   enabled = true,
+  isVersion = false,
   delay = 3000
 ) {
   const timeoutRef = useRef(null);
@@ -16,7 +17,7 @@ export default function useNoteBuffer(
   const { checkUpdateAutoSave, setCheckUpdateAutoSave } = useAutoSave();
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   useEffect(() => {
-    if (!noteId) {
+    if (!noteId || isVersion) {
       return;
     }
     const draft = localStorage.getItem(`note-draft-${noteId}`);
@@ -55,7 +56,7 @@ export default function useNoteBuffer(
   }, [checkUpdateAutoSave, settingsLoaded, setCheckUpdateAutoSave]);
 
   useEffect(() => {
-    if (!enabled || !noteId || !autoSaveEnabled) return;
+    if (!enabled || !noteId || !autoSaveEnabled || isVersion) return;
     clearTimeout(timeoutRef.current);
     localStorage.setItem(`note-draft-${noteId}`, JSON.stringify(note));
     timeoutRef.current = setTimeout(() => {
